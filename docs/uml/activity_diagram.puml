@@ -1,0 +1,130 @@
+@startuml Human_Perception_System_Activity_Diagram
+
+title Human Perception System - Activity Diagram\nFrame Processing Pipeline
+
+start
+
+:Receive new frame;
+note right
+  Input: 
+  - Frame buffer (BGR image)
+  - Width, height, channels
+  - Timestamp
+end note
+
+partition "Detection Phase" {
+  :Preprocess image for YOLO;
+  note right: Resize to 640x640, normalize
+  
+  :Run YOLO inference;
+  
+  :Parse YOLO output;
+  
+  :Filter by confidence threshold;
+  
+  if (Detections found?) then (yes)
+    :Apply Non-Maximum Suppression (NMS);
+    :Keep only 'person' class (ID=0);
+  else (no)
+    :Empty detection list;
+  endif
+}
+
+partition "Coordinate Transformation" {
+  :For each detection;
+  fork
+    :Get bounding box center (u, v);
+  fork again
+    :Get bounding box height (pixels);
+  end fork
+  
+  :Estimate depth using pinhole model;
+  note right
+    depth = (focal_length * avg_human_height) / bbox_height
+  end note
+  
+  :Convert pixel to camera frame;
+  note right
+    X = (u - cx) * depth / fx
+    Y = (v - cy) * depth / fy
+    Z = depth
+  end note
+  
+  :Apply camera rotation;
+  :Apply camera translation;
+  
+  :Obtain position in robot frame (x, y, z);
+}
+
+partition "Tracking Phase" {
+  :Predict all existing track positions;
+  note right: Use Kalman Filter prediction step
+  
+  :Compute IoU between predicted tracks\nand detected bounding boxes;
+  
+  if (IoU > threshold?) then (yes)
+    :Associate detection to track;
+    
+    fork
+      :Update track with new measurement;
+      :Update Kalman Filter;
+      :Increment hit count;
+      :Reset miss count;
+    fork again
+      :Check track state;
+      if (hitCount >= minHits?) then (yes)
+        :Change state to CONFIRMED;
+      endif
+    end fork
+    
+  else (no)
+    split
+      :Create new track (TENTATIVE);
+      :Initialize Kalman Filter;
+      :Assign new track ID;
+    split again
+      :Mark existing track as missed;
+      :Increment miss count;
+      
+      if (missCount > maxAge?) then (yes)
+        :Change state to LOST;
+        :Mark for deletion;
+      endif
+    end split
+  endif
+  
+  :Delete old/lost tracks;
+}
+
+partition "Output Generation" {
+  :Get all CONFIRMED tracks;
+  
+  :For each track, extract:
+  * Track ID
+  * 3D position (x, y, z)
+  * Velocity (vx, vy, vz)
+  * State and metadata;
+  
+  :Create PerceptionOutput;
+  
+  if (Visualization enabled?) then (yes)
+    :Draw bounding boxes;
+    :Draw track IDs and positions;
+    :Display frame;
+  endif
+}
+
+:Return PerceptionOutput to caller;
+
+stop
+
+note right
+  Output contains:
+  - tracks[]: Active track list
+  - timestamp: Frame timestamp
+  - frameCount: Total frames
+  - success: Processing status
+end note
+
+@enduml
+

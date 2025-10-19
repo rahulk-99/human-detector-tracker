@@ -13,10 +13,11 @@ target_include_directories(shell-app PUBLIC
 )
 
 # Any dependent libraires needed to build this target.
-target_link_libraries(shell-app PUBLIC -static
+target_link_libraries(shell-app PUBLIC
   # list of libraries
   myLib1
   myLib2
+  perception
   )
 
   

@@ -1,0 +1,318 @@
+@startuml Human_Perception_System_Class_Diagram
+
+!define ABSTRACT_CLASS abstract class
+!define INTERFACE interface
+
+title Human Perception System - Class Diagram
+
+package "Detection Module" {
+  INTERFACE IDetector {
+    + {abstract} detect(frame, width, height, channels) : vector<Detection>
+    + {abstract} setConfidenceThreshold(threshold) : void
+    + {abstract} getConfidenceThreshold() : float
+    + {abstract} isInitialized() : bool
+  }
+
+  class YOLODetector {
+    - modelPath_ : string
+    - confidenceThreshold_ : float
+    - nmsThreshold_ : float
+    - inputSize_ : int
+    - initialized_ : bool
+    - pImpl_ : unique_ptr<Impl>
+    + YOLODetector(modelPath, confThresh, nmsThresh, inputSize)
+    + detect(frame, width, height, channels) : vector<Detection>
+    + setConfidenceThreshold(threshold) : void
+    + getConfidenceThreshold() : float
+    + setNmsThreshold(threshold) : void
+    + getNmsThreshold() : float
+    + isInitialized() : bool
+    - initialize() : bool
+    - preprocessImage() : void
+    - postprocessOutput() : vector<Detection>
+    - applyNMS() : vector<Detection>
+  }
+
+  class Detection {
+    - bbox_ : BoundingBox
+    - confidence_ : float
+    - classId_ : int
+    - className_ : string
+    + Detection()
+    + Detection(bbox, confidence, classId, className)
+    + getBoundingBox() : BoundingBox
+    + getConfidence() : float
+    + getClassId() : int
+    + getClassName() : string
+    + setBoundingBox(bbox) : void
+    + setConfidence(confidence) : void
+    + setClass(classId, className) : void
+    + isValid(threshold) : bool
+  }
+
+  class BoundingBox {
+    - x_ : float
+    - y_ : float
+    - width_ : float
+    - height_ : float
+    + BoundingBox()
+    + BoundingBox(x, y, width, height)
+    + getX() : float
+    + getY() : float
+    + getWidth() : float
+    + getHeight() : float
+    + getLeft() : float
+    + getRight() : float
+    + getTop() : float
+    + getBottom() : float
+    + getArea() : float
+    + computeIoU(other) : float
+    + set(x, y, width, height) : void
+  }
+
+  YOLODetector ..|> IDetector
+  Detection *-- BoundingBox
+  YOLODetector ..> Detection : creates
+}
+
+package "Tracking Module" {
+  INTERFACE ITracker {
+    + {abstract} update(detections, timestamp) : void
+    + {abstract} getActiveTracks() : vector<Track>
+    + {abstract} getTrackById(trackId) : Track
+    + {abstract} reset() : void
+    + {abstract} setMaxAge(maxAge) : void
+    + {abstract} getTrackCount() : int
+  }
+
+  class KalmanTracker {
+    - tracks_ : vector<Track>
+    - kalmanFilters_ : map<int, KalmanFilter>
+    - nextTrackId_ : int
+    - maxAge_ : int
+    - minHits_ : int
+    - iouThreshold_ : float
+    - currentTimestamp_ : double
+    + KalmanTracker(maxAge, minHits, iouThreshold)
+    + update(detections, timestamp) : void
+    + getActiveTracks() : vector<Track>
+    + getTrackById(trackId) : Track
+    + reset() : void
+    + setMaxAge(maxAge) : void
+    + getTrackCount() : int
+    - predictTracks() : void
+    - associateDetectionsToTracks() : vector<pair<int,int>>
+    - createNewTrack() : void
+    - updateTrack() : void
+    - handleUnmatchedTracks() : void
+    - deleteOldTracks() : void
+  }
+
+  class Track {
+    - trackId_ : int
+    - state_ : TrackState
+    - bbox_ : BoundingBox
+    - position_ : Position3D
+    - velocity_ : Position3D
+    - hitCount_ : int
+    - missCount_ : int
+    - age_ : int
+    - timestamp_ : double
+    + Track()
+    + Track(trackId, initialBbox, initialPosition, timestamp)
+    + getId() : int
+    + getState() : TrackState
+    + getBoundingBox() : BoundingBox
+    + getPosition() : Position3D
+    + getVelocity() : Position3D
+    + getHitCount() : int
+    + getMissCount() : int
+    + getAge() : int
+    + update(bbox, position, timestamp) : void
+    + predict(timestamp) : void
+    + markMissed() : void
+    + shouldDelete(maxAge) : bool
+  }
+
+  class KalmanFilter {
+    - stateDim_ : int
+    - measureDim_ : int
+    - state_ : vector<float>
+    - covariance_ : vector<float>
+    - F_ : vector<float>
+    - H_ : vector<float>
+    - Q_ : vector<float>
+    - R_ : vector<float>
+    - initialized_ : bool
+    + KalmanFilter(stateDim, measureDim)
+    + initialize(initialState, initialCovariance) : void
+    + predict(dt) : void
+    + update(measurement) : void
+    + getState() : vector<float>
+    + getCovariance() : vector<float>
+    + setProcessNoise(Q) : void
+    + setMeasurementNoise(R) : void
+    + reset() : void
+    + isInitialized() : bool
+  }
+
+  enum TrackState {
+    TENTATIVE
+    CONFIRMED
+    LOST
+  }
+
+  KalmanTracker ..|> ITracker
+  KalmanTracker *-- Track
+  KalmanTracker *-- KalmanFilter
+  Track --> TrackState
+  Track *-- BoundingBox
+}
+
+package "Core Module" {
+  INTERFACE ICoordinateTransform {
+    + {abstract} imageToRobotFrame(bbox, width, height) : Position3D
+    + {abstract} pixelToCameraFrame(pixelX, pixelY, depth, width, height) : Position3D
+    + {abstract} cameraToRobotFrame(cameraPos) : Position3D
+  }
+
+  class CoordinateTransformer {
+    - cameraModel_ : CameraModel
+    - averageHumanHeight_ : float
+    + CoordinateTransformer(cameraModel)
+    + imageToRobotFrame(bbox, width, height) : Position3D
+    + pixelToCameraFrame(pixelX, pixelY, depth, width, height) : Position3D
+    + cameraToRobotFrame(cameraPos) : Position3D
+    + setCameraModel(cameraModel) : void
+    + getCameraModel() : CameraModel
+    + setAverageHumanHeight(height) : void
+    + getAverageHumanHeight() : float
+  }
+
+  class CameraModel {
+    - fx_ : float
+    - fy_ : float
+    - cx_ : float
+    - cy_ : float
+    - imageWidth_ : int
+    - imageHeight_ : int
+    - cameraPosition_ : Position3D
+    - cameraRotation_[9] : float
+    - calibrated_ : bool
+    + CameraModel()
+    + CameraModel(fx, fy, cx, cy, width, height)
+    + loadCalibration(calibrationFile) : bool
+    + getFocalLengthX() : float
+    + getFocalLengthY() : float
+    + getPrincipalPointX() : float
+    + getPrincipalPointY() : float
+    + getImageWidth() : int
+    + getImageHeight() : int
+    + getCameraPosition() : Position3D
+    + getCameraRotation() : float*
+    + setCameraPose(position, rotation) : void
+    + setIntrinsics(fx, fy, cx, cy) : void
+    + isCalibrated() : bool
+  }
+
+  class PerceptionPipeline {
+    - detector_ : shared_ptr<IDetector>
+    - tracker_ : shared_ptr<ITracker>
+    - transformer_ : shared_ptr<ICoordinateTransform>
+    - cameraModel_ : CameraModel
+    - frameCount_ : int
+    - visualizationEnabled_ : bool
+    + PerceptionPipeline(detector, tracker, transformer, cameraModel)
+    + processFrame(frame, width, height, channels, timestamp) : PerceptionOutput
+    + processVideo(videoPath) : vector<PerceptionOutput>
+    + processCamera(cameraId, maxFrames) : vector<PerceptionOutput>
+    + reset() : void
+    + getDetector() : shared_ptr<IDetector>
+    + getTracker() : shared_ptr<ITracker>
+    + getTransformer() : shared_ptr<ICoordinateTransform>
+    + getCameraModel() : CameraModel
+    + getFrameCount() : int
+    + setVisualization(enable) : void
+    + isVisualizationEnabled() : bool
+  }
+
+  class PerceptionOutput {
+    + tracks : vector<Track>
+    + timestamp : double
+    + frameCount : int
+    + success : bool
+  }
+
+  CoordinateTransformer ..|> ICoordinateTransform
+  CoordinateTransformer *-- CameraModel
+  PerceptionPipeline o-- IDetector
+  PerceptionPipeline o-- ITracker
+  PerceptionPipeline o-- ICoordinateTransform
+  PerceptionPipeline *-- CameraModel
+  PerceptionPipeline ..> PerceptionOutput : creates
+}
+
+package "Utils Module" {
+  class Position3D {
+    - x_ : float
+    - y_ : float
+    - z_ : float
+    + Position3D()
+    + Position3D(x, y, z)
+    + getX() : float
+    + getY() : float
+    + getZ() : float
+    + setX(x) : void
+    + setY(y) : void
+    + setZ(z) : void
+    + set(x, y, z) : void
+    + distanceTo(other) : float
+    + magnitude() : float
+    + normalize() : Position3D
+    + operator+(other) : Position3D
+    + operator-(other) : Position3D
+    + operator*(scalar) : Position3D
+    + operator/(scalar) : Position3D
+    + dot(other) : float
+    + cross(other) : Position3D
+  }
+
+  class GeometryUtils <<utility>> {
+    + {static} estimateDepthFromBboxHeight(bbox, focalLength, humanHeight) : float
+    + {static} computeIntersectionArea(box1, box2) : float
+    + {static} computeUnionArea(box1, box2) : float
+    + {static} applyRotation(position, rotationMatrix) : Position3D
+    + {static} applyTranslation(position, translation) : Position3D
+    + {static} pixelToNormalized(pixelX, pixelY, width, height, normX, normY) : void
+    + {static} clamp(value, min, max) : float
+  }
+}
+
+' Dependencies between packages
+Track *-- Position3D
+CameraModel *-- Position3D
+CoordinateTransformer ..> Position3D : uses
+CoordinateTransformer ..> GeometryUtils : uses
+Track ..> BoundingBox : uses
+
+note right of PerceptionPipeline
+  Facade pattern: 
+  Orchestrates detection,
+  tracking, and coordinate
+  transformation pipeline
+end note
+
+note right of IDetector
+  Strategy pattern:
+  Allows different detection
+  algorithms (YOLO, SSD, etc.)
+end note
+
+note right of ITracker
+  Strategy pattern:
+  Allows different tracking
+  algorithms (Kalman, Particle Filter, etc.)
+end note
+
+@enduml
+

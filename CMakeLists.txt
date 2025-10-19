@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.14)
-project(scratch)
+project(human_perception_system VERSION 1.0.0 LANGUAGES CXX)
 
 #
 # GoogleTest Setup
 # ref: https://google.github.io/googletest/quickstart-cmake.html
 #
 
-# GoogleTest requires at least C++14
-set(CMAKE_CXX_STANDARD 14)
+# Project requires C++17
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # declares a dependency on GoogleTest which is downloaded from GitHub

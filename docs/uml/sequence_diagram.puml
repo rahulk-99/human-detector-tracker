@@ -1,0 +1,145 @@
+@startuml Human_Perception_System_Sequence_Diagram
+
+title Human Perception System - Sequence Diagram\nFrame Processing Workflow
+
+actor "User/Robot" as User
+participant "PerceptionPipeline" as Pipeline
+participant "YOLODetector" as Detector
+participant "CoordinateTransformer" as Transformer
+participant "CameraModel" as Camera
+participant "KalmanTracker" as Tracker
+participant "KalmanFilter" as Kalman
+participant "Track" as Track
+database "Frame Buffer" as Frame
+
+== Initialization Phase ==
+User -> Pipeline: PerceptionPipeline(detector, tracker, transformer, camera)
+Pipeline -> Detector: Check isInitialized()
+Detector --> Pipeline: true
+Pipeline -> Camera: Get camera parameters
+Camera --> Pipeline: fx, fy, cx, cy, pose
+Pipeline --> User: Pipeline ready
+
+== Frame Processing Phase ==
+User -> Pipeline: processFrame(frame, width, height, channels, timestamp)
+activate Pipeline
+
+Pipeline -> Detector: detect(frame, width, height, channels)
+activate Detector
+Detector -> Detector: preprocessImage()
+Detector -> Detector: Run YOLO inference
+Detector -> Detector: postprocessOutput()
+Detector -> Detector: applyNMS()
+Detector --> Pipeline: detections[]
+deactivate Detector
+
+loop for each detection
+  Pipeline -> Transformer: imageToRobotFrame(bbox, width, height)
+  activate Transformer
+  
+  Transformer -> Camera: getFocalLength()
+  Camera --> Transformer: focal_length
+  
+  Transformer -> Transformer: estimateDepthFromBboxHeight(bbox, focal_length)
+  note right: Uses pinhole camera model:\ndepth = (focal_length * real_height) / pixel_height
+  
+  Transformer -> Transformer: pixelToCameraFrame(bbox.center, depth)
+  note right: X = (u - cx) * Z / fx\nY = (v - cy) * Z / fy
+  
+  Transformer -> Camera: getCameraRotation()
+  Camera --> Transformer: rotation_matrix
+  
+  Transformer -> Camera: getCameraPosition()
+  Camera --> Transformer: camera_position
+  
+  Transformer -> Transformer: cameraToRobotFrame(camera_pos)
+  note right: Apply rotation and translation
+  
+  Transformer --> Pipeline: position_3d (x, y, z in robot frame)
+  deactivate Transformer
+end
+
+Pipeline -> Tracker: update(detections, timestamp)
+activate Tracker
+
+Tracker -> Tracker: predictTracks()
+loop for each existing track
+  Tracker -> Track: predict(timestamp)
+  activate Track
+  Track -> Track: position += velocity * dt
+  Track --> Tracker: predicted state
+  deactivate Track
+end
+
+Tracker -> Tracker: associateDetectionsToTracks(detections)
+note right: Uses IoU matching between\npredicted tracks and detections
+
+loop for each matched pair (track, detection)
+  Tracker -> Track: update(bbox, position, timestamp)
+  activate Track
+  Track -> Track: Update velocity estimate
+  Track -> Track: hitCount++, missCount=0
+  Track -> Track: Check state transition\n(TENTATIVE -> CONFIRMED)
+  Track --> Tracker: updated
+  deactivate Track
+  
+  Tracker -> Kalman: update(measurement)
+  activate Kalman
+  Kalman -> Kalman: Compute Kalman gain
+  Kalman -> Kalman: state = state + K * innovation
+  Kalman --> Tracker: updated state
+  deactivate Kalman
+end
+
+loop for each unmatched detection
+  Tracker -> Tracker: createNewTrack(detection)
+  Tracker -> Track: Track(newId, bbox, position, timestamp)
+  activate Track
+  Track --> Tracker: new track (TENTATIVE)
+  deactivate Track
+  
+  Tracker -> Kalman: KalmanFilter(6, 3)
+  activate Kalman
+  Kalman -> Kalman: initialize(initialState, initialCov)
+  Kalman --> Tracker: initialized filter
+  deactivate Kalman
+end
+
+loop for each unmatched track
+  Tracker -> Track: markMissed()
+  activate Track
+  Track -> Track: missCount++
+  Track -> Track: Check if missCount > threshold\n(CONFIRMED -> LOST)
+  Track --> Tracker: updated
+  deactivate Track
+end
+
+Tracker -> Tracker: deleteOldTracks()
+note right: Remove tracks with\nmissCount > maxAge
+
+Tracker -> Tracker: getActiveTracks()
+Tracker --> Pipeline: active_tracks[]
+deactivate Tracker
+
+Pipeline -> Pipeline: Create PerceptionOutput
+Pipeline -> Pipeline: Visualize (if enabled)
+
+Pipeline --> User: PerceptionOutput{tracks, timestamp, frameCount, success}
+deactivate Pipeline
+
+== Output Format ==
+note over User
+  PerceptionOutput contains:
+  - tracks[]: Array of Track objects
+    - trackId: Unique ID
+    - position: (x, y, z) in robot frame [meters]
+    - velocity: (vx, vy, vz) [m/s]
+    - state: TENTATIVE/CONFIRMED/LOST
+    - hitCount, missCount, age
+  - timestamp: Frame timestamp [seconds]
+  - frameCount: Total frames processed
+  - success: Processing status
+end note
+
+@enduml
+

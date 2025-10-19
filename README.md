@@ -1,253 +1,563 @@
-# cpp-boilerplate-v2
+# Human Perception System (HPS)
 
-# C++ Boilerplate v2 Badges
-![CICD Workflow status](https://github.com/TommyChangUMD/cpp-boilerplate-v2/actions/workflows/run-unit-test-and-upload-codecov.yml/badge.svg) [![codecov](https://codecov.io/gh/TommyChangUMD/cpp-boilerplate-v2/branch/main/graph/badge.svg)](https://codecov.io/gh/TommyChangUMD/cpp-boilerplate-v2) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
+[![CICD Workflow status](https://github.com/rahulk-99/human-detector-tracker/actions/workflows/run-unit-test-and-upload-codecov.yml/badge.svg)](https://github.com/rahulk-99/human-detector-tracker/actions/workflows/run-unit-test-and-upload-codecov.yml)
+[![codecov](https://codecov.io/gh/rahulk-99/human-detector-tracker/branch/main/graph/badge.svg)](https://codecov.io/gh/rahulk-99/human-detector-tracker)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## Overview
 
-Simple starter C++ project with:
+The **Human Perception System (HPS)** is a modular C++17 robotics perception module designed for Acme Robotics. It detects and tracks humans (N≥1) in real-time using monocular camera input and outputs their 3D positions directly in the robot's reference frame.
 
-- CMake
-- GoogleTest
+### Main Features
 
-## Standard install via command-line
+- **Human Detection**: YOLOv8-based detection with configurable confidence thresholds
+- **Multi-Object Tracking**: Kalman Filter-based tracking with IoU data association
+- **Coordinate Transformation**: Automatic transformation from image coordinates to robot frame
+- **Real-Time Processing**: Designed for 30 FPS operation without ROS dependency
+- **Depth Estimation**: Monocular depth estimation using bounding box height heuristic
+- **Modular Architecture**: Clean interfaces following SOLID principles and design patterns
+
+## Table of Contents
+
+- [Architecture](#architecture)
+- [Dependencies](#dependencies)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Testing](#testing)
+- [Documentation](#documentation)
+- [UML Diagrams](#uml-diagrams)
+- [Design Patterns](#design-patterns)
+- [Project Structure](#project-structure)
+- [Phase 0 Status](#phase-0-status)
+- [Contributing](#contributing)
+- [License](#license)
+- [Authors](#authors)
+
+## Architecture
+
+The system is organized into four main modules:
+
+### 1. Detection Module
+- **IDetector**: Abstract interface for detection algorithms (Strategy pattern)
+- **YOLODetector**: YOLOv8 implementation for human detection
+- **Detection**: Data class for detection results
+- **BoundingBox**: 2D bounding box representation with IoU calculation
+
+### 2. Tracking Module
+- **ITracker**: Abstract interface for tracking algorithms (Strategy pattern)
+- **KalmanTracker**: Multi-object tracker with Kalman filters
+- **KalmanFilter**: Generic discrete-time Kalman filter implementation
+- **Track**: Track lifecycle management with state machine (TENTATIVE→CONFIRMED→LOST)
+
+### 3. Core Module
+- **PerceptionPipeline**: Main facade orchestrating the entire workflow (Facade pattern)
+- **CameraModel**: Camera intrinsic and extrinsic parameters
+- **CoordinateTransformer**: Transforms from image to robot reference frame
+- **ICoordinateTransform**: Abstract interface for coordinate transformations
+
+### 4. Utils Module
+- **Position3D**: 3D vector class with geometric operations
+- **GeometryUtils**: Static utility functions for geometric calculations
+
+## Dependencies
+
+### Required
+- **C++17 compliant compiler** (GCC 7+, Clang 5+, MSVC 2017+)
+- **CMake 3.14+**
+- **GoogleTest** (fetched automatically by CMake)
+
+### Optional (Phase 1+)
+- **OpenCV 4.0+** (for YOLO inference and camera I/O)
+- **ONNX Runtime** (alternative for YOLO inference)
+
+### Third-Party Libraries Justification
+
+1. **OpenCV**: Industry-standard computer vision library
+   - Camera interface and image I/O
+   - DNN module for YOLO inference
+   - Camera calibration and coordinate transformations
+   
+2. **YOLOv8**: State-of-the-art object detector (AGPL-3.0 license)
+   - Pre-trained models available (no training required)
+   - Free for academic/educational use
+   - High accuracy and real-time performance
+
+## Installation
+
+### Standard Build
+
 ```bash
-# Download the code:
-  git clone https://github.com/TommyChangUMD/cpp-boilerplate-v2
-  cd cpp-boilerplate-v2
-# Configure the project and generate a native build system:
-  # Must re-run this command whenever any CMakeLists.txt file has been changed.
-  cmake -S ./ -B build/
-# Compile and build the project:
-  # rebuild only files that are modified since the last build
-  cmake --build build/
-  # or rebuild everything from scracth
-  cmake --build build/ --clean-first
-  # to see verbose output, do:
-  cmake --build build/ --verbose
-# Run program:
-  ./build/app/shell-app
-# Run tests:
-  cd build/; ctest; cd -
-  # or if you have newer cmake
-  ctest --test-dir build/
-# Build docs:
-  cmake --build build/ --target docs
-  # open a web browser to browse the doc
-  open docs/html/index.html
-# Clean
-  cmake --build build/ --target clean
-# Clean and start over:
-  rm -rf build/
+# Clone the repository
+git clone https://github.com/rahulk-99/human-detector-tracker.git
+cd human-detector-tracker
+
+# Configure the project
+cmake -S ./ -B build/
+
+# Build the project
+cmake --build build/
+
+# Run the main application
+./build/app/shell-app
+
+# Run unit tests
+cd build/
+ctest
+# or
+ctest --test-dir build/
 ```
 
-ref: https://cmake.org/cmake/help/latest/manual/cmake.1.html
-
-## Building for code coverage (for assignments beginning in Week 4)
+### Build with Code Coverage
 
 ```bash
-# if you don't have gcovr or lcov installed, do:
-  sudo apt-get install gcovr lcov
-# Set the build type to Debug and WANT_COVERAGE=ON
-  cmake -D WANT_COVERAGE=ON -D CMAKE_BUILD_TYPE=Debug -S ./ -B build/
-# Now, do a clean compile, run unit test, and generate the covereage report
-  cmake --build build/ --clean-first --target all test_coverage
-# open a web browser to browse the test coverage report
-  open build/test_coverage/index.html
+# Install coverage tools
+sudo apt-get install gcovr lcov
 
-This generates a index.html page in the build/test_coverage sub-directory that can be viewed locally in a web browser.
+# Configure with coverage enabled
+cmake -D WANT_COVERAGE=ON -D CMAKE_BUILD_TYPE=Debug -S ./ -B build/
+
+# Build and generate coverage report
+cmake --build build/ --clean-first --target all test_coverage
+
+# View coverage report
+open build/test_coverage/index.html
 ```
 
-You can also get code coverage report for the *shell-app* target, instead of unit test. Repeat the previous 2 steps but with the *app_coverage* target:
+### Build with Static Analysis
 
-``` bash
-# Now, do another clean compile, run shell-app, and generate its covereage report
-  cmake --build build/ --clean-first --target all app_coverage
-# open a web browser to browse the test coverage report
-  open build/app_coverage/index.html
+```bash
+# Install cppcheck
+sudo apt-get install cppcheck
 
-This generates a index.html page in the build/app_coverage sub-directory that can be viewed locally in a web browser.
+# Run static analysis
+cppcheck --enable=all --std=c++17 --suppress=missingIncludeSystem \
+  --inline-suppr --quiet include/ libs/ app/ test/ 2> cppcheck_report.txt
 ```
 
-## How to use GitHub CI to upload coverage report to Codecov
+### Generate Documentation
 
-### First, sign up Codecov with you GitHub account.
+```bash
+# Build Doxygen documentation
+cmake --build build/ --target docs
 
-  https://about.codecov.io/sign-up/
-
-### Configure the repository you want to upload from
-
-After you sign in, you should see a list of your
-repositories. Configure the one you want to receive coverage data
-from.
-
-In the confiuration screen, scroll down to "**Step 2: add repository
-token as repository secret**"
-
-You should see a pre-generated repository secrete like below:
-
-  "CODECOV_TOKEN"    "fb85d2f0-8db8-48cc-9e8e-9681d51fd9c4"  <--- **this is just an example**
-
-Now, click on the **"repository secret"** link, which takes you back to
-your GitHub account, and add the above as a New Secret:  **(your Secret # is different)**
-
-   - Name = CODECOV_TOKEN
-
-   - Secret = fb85d2f0-8db8-48cc-9e8e-9681d51fd9c4
-
-Click the "Add secret" button.
-
-
-### Create a GitHub CI yaml file
-
-See below for the setup of this repo:
-
-https://github.com/TommyChangUMD/cpp-boilerplate-v2/blob/main/.github/workflows/run-unit-test-and-upload-codecov.yml
-
-### Add your Codecov and GitHub CI badge to README.md
-
-Follow the instruction below to copy the badge (in markdown format)
-and paste it at the top of your README.md file.
-
-For example:
-#### CICD Workflow status
-
-https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/adding-a-workflow-status-badge
-
-For example,
-
-To generate the CICD badge for this particular repo, I put the line below in this README.md file:
-``` markdown
-![CICD Workflow status](https://github.com/TommyChangUMD/cpp-boilerplate-v2/actions/workflows/run-unit-test-and-upload-codecov.yml/badge.svg)
-```
-![CICD Workflow status](https://github.com/TommyChangUMD/cpp-boilerplate-v2/actions/workflows/run-unit-test-and-upload-codecov.yml/badge.svg)
-
-
-#### Code Coverage Report
-https://docs.codecov.com/docs/status-badges
-
-For example, to generate the Code Coverage badge for this particular repo,  I put the line below in this README.md file:
-``` markdown
-[![codecov](https://codecov.io/gh/TommyChangUMD/cpp-boilerplate-v2/branch/main/graph/badge.svg)](https://codecov.io/gh/TommyChangUMD/cpp-boilerplate-v2)
+# Open documentation
+open docs/html/index.html
 ```
 
-[![codecov](https://codecov.io/gh/TommyChangUMD/cpp-boilerplate-v2/branch/main/graph/badge.svg)](https://codecov.io/gh/TommyChangUMD/cpp-boilerplate-v2)
+## Usage
 
+### Basic Example
 
+```cpp
+#include "perception/core/PerceptionPipeline.hpp"
+#include "perception/detection/YOLODetector.hpp"
+#include "perception/tracking/KalmanTracker.hpp"
+#include "perception/core/CoordinateTransformer.hpp"
 
-Note: When you click on the codecov badge, you should see the coverage
-report.  You should also see the source file listing.  If not, you may
-need to login your codecov account first.
+using namespace perception;
 
-
-## Working with C++ IDE and LSP
-
-You must set up clangd and use it with the C++ IDE of your choice. Most people use Visual Studio Code, but if you are using some other IDE, be sure to check if it supports the Language Server Protocol (LSP).
-
-ref: https://clangd.llvm.org/installation.html
-
-
-### clangd C++ language server setup
-
-Run the [provided bash script][config-clangd.bash] or manually create the `~/.config/clangd/config.yaml` file with the following content:
-
-[config-clangd.bash]: https://raw.githubusercontent.com/TommyChangUMD/cpp-boilerplate-v2/main/scripts/config-clangd.bash
-
-```
-Diagnostics:
-  UnusedIncludes: Strict
-
-CompileFlags:
-  # Treat code as C++, use C++17 standard, enable more warnings.
-  # Add: [-xc++, -std=c++17, -Wall, -Wno-missing-prototypes]
-  Add: ["-std=c++17", "-I/usr/include/c++/11", "-I/usr/include/x86_64-linux-gnu/c++/11"]
-
-  # Get rid of error [drv_unknown_argument]: Unknown argument: '-fprofile-abs-path'
-  Remove: [-fprofile-abs-path]
-```
-
-This configuration instructs clangd to use C++-17 standard and catch any unused include files.  You are welcome to customize it further.   See https://clangd.llvm.org/config for more info.
-
-### Visual studio code C++ IDE setup
-
-Download vscode from https://code.visualstudio.com/docs/?dv=linux64_deb.
-
-To install and run it on your Ubuntu, assuming the downloaded debian file is `code_1.81.1-1691620686_amd64.deb`, do:
-
-``` bash
-cd ~/Downloads
-sudo dpkg -i code_1.81.1-1691620686_amd64.deb
-code
+int main() {
+  // Initialize camera model
+  core::CameraModel camera(800.0f, 800.0f, 320.0f, 240.0f, 640, 480);
+  
+  // Set camera pose (0.5m above robot base)
+  utils::Position3D cameraPos(0.0f, 0.0f, 0.5f);
+  float rotation[9] = {1, 0, 0, 0, 1, 0, 0, 0, 1};  // Identity
+  camera.setCameraPose(cameraPos, rotation);
+  
+  // Create detector, tracker, transformer
+  auto detector = std::make_shared<detection::YOLODetector>(
+      "models/yolov8n.onnx", 0.5f, 0.4f, 640);
+  auto tracker = std::make_shared<tracking::KalmanTracker>(30, 3, 0.3f);
+  auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
+  
+  // Create perception pipeline
+  core::PerceptionPipeline pipeline(detector, tracker, transformer, camera);
+  
+  // Process frame
+  core::PerceptionOutput output = pipeline.processFrame(
+      frame_data, width, height, channels, timestamp);
+  
+  // Access tracked humans
+  for (const auto& track : output.tracks) {
+    const auto& pos = track.getPosition();
+    std::cout << "Human at: (" << pos.getX() << ", " 
+              << pos.getY() << ", " << pos.getZ() << ") m\n";
+  }
+  
+  return 0;
+}
 ```
 
-Now, you must configure it to use clangd. Follow the instructions at https://clangd.llvm.org/installation.html#editor-plugins and look for "Visual Studio Code" under the `Editor plugins` section.
+### Camera Calibration
 
-See https://github.com/clangd/vscode-clangd for more info.
+For accurate 3D position estimation, calibrate your camera:
 
-### Emacs C++ IDE setup
-
-If you use Emacs as your C++ IDE, then install eglot and supporting packages:
-``` lisp
-(package-initialize)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-(package-refresh-contents)
-(setq package-selected-packages '(eglot yasnippet company markdown-mode yasnippet-snippets cpp-auto-include))
-(package-install-selected-packages)
-
+```bash
+# Use OpenCV calibration tools or ROS camera_calibration
+# Save calibration to YAML file
+# Load in code:
+camera.loadCalibration("config/camera_calibration.yaml");
 ```
 
-Add to ~/.emacs:
+## Testing
 
-``` lisp
-(require 'eglot)
-(add-to-list 'eglot-server-programs '((c++-mode c-mode) "clangd"))
+### Run All Tests
+
+```bash
+cd build/
+ctest --verbose
 ```
 
-See https://joaotavora.github.io/eglot/ for more info.
+### Run Specific Test
 
-
-
-## Verify C++ IDE and LSP are working
-
-clangd will automatically run in the background when invoked by the IDE. To verify that it is running correctly, check whether the IDE can perform features such as code completion, and locating declarations, references, definitions, and symbols.
-
-However, for clangd to work properly, it must ab able to find a compilation database file called `compile_commands.json`.  There are many ways to generate this json file.  CMake can generate it using the `CMAKE_EXPORT_COMPILE_COMMANDS` option.
-
-``` bash
-  # generate compile_commands.json
-  cmake -S ./ -B build/
-  # verify compile_commands.json has been generated
-  ls -l build/compile_commands.json
-  cat build/compile_commands.json
+```bash
+./build/test/cpp-test --gtest_filter=BoundingBoxTest.*
 ```
 
-Alternatively, a program called `bear` can also be used to create `compile_commands.json`, regardless of the C++ build system you are using. It does this by intercepting subsequent command-line commands and collecting all C++ compilation flags passed to the compiler.  To use this approach, prepend `bear --` at the beginning of the build command.   For CMake, you can do:
+### Test Coverage
 
-``` bash
-# build compile_commands.json from scratch
-  bear -- cmake --build build/ --clean-first
-# or, update the existing compile_commands.json
-  bear --append -- cmake --build build/
-# there should be a compile_commands.json file in the current directory
-  ls -l ./compile_commands.json
-# to make it consistent with cmake's convention, move it to the build/ directory
-  mv compile_commands.json build/
+The project aims for **90%+ code coverage**. Current test suites:
+
+- **BoundingBox Tests**: IoU calculation, area computation, edge cases
+- **Detection Tests**: Validity checks, confidence thresholds
+- **YOLODetector Tests**: Initialization, mock detections
+- **Track Tests**: State transitions, update logic
+- **KalmanFilter Tests**: Prediction, update cycles
+- **KalmanTracker Tests**: Data association, track management
+- **Coordinate Transformation Tests**: Image→Robot frame conversion
+- **PerceptionPipeline Tests**: End-to-end integration
+
+## Documentation
+
+### Doxygen Documentation
+
+All public APIs are documented using Doxygen format in header files:
+
+```cpp
+/**
+ * @brief Detect humans in an image frame
+ * 
+ * @param frame Input image as raw data (BGR format)
+ * @param width Width of the image in pixels
+ * @param height Height of the image in pixels
+ * @param channels Number of color channels (3 for RGB/BGR)
+ * @return std::vector<Detection> Vector of detected humans
+ */
+std::vector<Detection> detect(const unsigned char* frame,
+                              int width, int height, int channels);
 ```
 
-Either way, this should produce the `compile_commands.json` file.  Now, you can use it with the IDE.
+Generate and view documentation:
 
-### Visual studio code
-1. Open `cpp-boilerplate-v2/app/main.cpp`
+```bash
+cmake --build build/ --target docs
+open docs/html/index.html
+```
 
-1. Click the `dummy()` function call and press the F12 key (or right-click->Go to Definition).  Visual studio code should automatically open `cpp-boilerplate-v2/include/lib.hpp` and place the curse at line 5, where the `dummy` function is defined.
+## UML Diagrams
 
-1. Close the editor, delete the `build/compile_commands.json` file and repeat.  Verify that *step 2 does not work anymore*.
+### Class Diagram
 
-### Emacs
+Shows complete class hierarchy, interfaces, and relationships.
 
-1. Open `cpp-boilerplate-v2/app/main.cpp` and start `eglot` if it's not already running.
+![Class Diagram](docs/uml/class_diagram.png)
 
-1. Move the cursor to the `dummy()` function call and press the `<M-.>` key (or xref-find-definitions).  Emacs should automatically open `cpp-boilerplate-v2/include/lib.hpp` and place the curse at line 5, where the `dummy` function is defined.
+See: [`docs/uml/class_diagram.puml`](docs/uml/class_diagram.puml)
 
-1. Close the editor, delete the `build/compile_commands.json` file and repeat.  Verify that *step 2 does not work anymore*.
+### Sequence Diagram
+
+Illustrates frame processing workflow from detection to tracking.
+
+![Sequence Diagram](docs/uml/sequence_diagram.png)
+
+See: [`docs/uml/sequence_diagram.puml`](docs/uml/sequence_diagram.puml)
+
+### Activity Diagram
+
+Depicts the perception pipeline decision flow and processing steps.
+
+![Activity Diagram](docs/uml/activity_diagram.png)
+
+See: [`docs/uml/activity_diagram.puml`](docs/uml/activity_diagram.puml)
+
+### Generate UML Diagrams
+
+```bash
+# Install PlantUML
+sudo apt-get install plantuml
+
+# Generate PNG from PlantUML files
+plantuml docs/uml/*.puml
+```
+
+## Design Patterns
+
+The codebase demonstrates several design patterns:
+
+1. **Strategy Pattern**
+   - `IDetector`, `ITracker`, `ICoordinateTransform` interfaces
+   - Allows swapping detection/tracking algorithms at runtime
+
+2. **Facade Pattern**
+   - `PerceptionPipeline` simplifies complex subsystem interactions
+   - Single entry point for perception functionality
+
+3. **Factory Pattern** (Phase 1+)
+   - Detector and tracker factory classes for object creation
+
+4. **RAII Pattern**
+   - Resource management through constructors/destructors
+   - Smart pointers for automatic memory management
+
+5. **Pimpl Idiom**
+   - `YOLODetector::Impl` hides implementation details
+   - Reduces compilation dependencies
+
+## Project Structure
+
+```
+phase0/
+├── app/                          # Main application
+│   ├── main.cpp                  # Demo application
+│   └── CMakeLists.txt
+├── include/                      # Public headers
+│   └── perception/
+│       ├── detection/            # Detection module
+│       │   ├── IDetector.hpp
+│       │   ├── YOLODetector.hpp
+│       │   ├── Detection.hpp
+│       │   └── BoundingBox.hpp
+│       ├── tracking/             # Tracking module
+│       │   ├── ITracker.hpp
+│       │   ├── KalmanTracker.hpp
+│       │   ├── KalmanFilter.hpp
+│       │   └── Track.hpp
+│       ├── core/                 # Core pipeline
+│       │   ├── PerceptionPipeline.hpp
+│       │   ├── CameraModel.hpp
+│       │   ├── CoordinateTransformer.hpp
+│       │   └── ICoordinateTransform.hpp
+│       └── utils/                # Utilities
+│           ├── Position3D.hpp
+│           └── GeometryUtils.hpp
+├── libs/                         # Library implementations
+│   └── perception/
+│       ├── detection/            # Detection sources
+│       ├── tracking/             # Tracking sources
+│       ├── core/                 # Core sources
+│       ├── utils/                # Utils sources
+│       └── CMakeLists.txt
+├── test/                         # Unit tests
+│   ├── perception_test.cpp       # Comprehensive test suite
+│   ├── test.cpp                  # Legacy tests
+│   ├── main.cpp                  # Test main
+│   └── CMakeLists.txt
+├── docs/                         # Documentation
+│   ├── uml/                      # UML diagrams (PlantUML)
+│   │   ├── class_diagram.puml
+│   │   ├── sequence_diagram.puml
+│   │   └── activity_diagram.puml
+│   └── html/                     # Generated Doxygen docs
+├── cmake-modules/                # CMake utilities
+│   └── CodeCoverage.cmake
+├── scripts/                      # Helper scripts
+│   └── config-clangd.bash
+├── CMakeLists.txt                # Main CMake config
+├── README.md                     # This file
+└── LICENSE                       # MIT License
+```
+
+## Phase 0 Status
+
+### Completed ✅
+
+- [x] Complete class structure with interfaces
+- [x] All header files with Doxygen documentation
+- [x] Stub implementations (compiles and links)
+- [x] Comprehensive unit test structure
+- [x] CMake build system with dependencies
+- [x] UML diagrams (class, sequence, activity)
+- [x] Design patterns implementation
+- [x] Google C++ Style Guide compliance
+- [x] Main demo application
+- [x] README with developer documentation
+
+### Phase 1 Tasks (Upcoming)
+
+- [ ] Integrate OpenCV for image I/O
+- [ ] Implement actual YOLO model loading and inference
+- [ ] Complete Kalman Filter matrix operations
+- [ ] Add video/camera processing support
+- [ ] Implement visualization module
+- [ ] Real-world testing with sample videos
+- [ ] Performance optimization
+- [ ] GitHub CI/CD pipeline setup
+- [ ] CodeCov integration
+
+### Phase 2 Tasks (Future)
+
+- [ ] Handle occlusion scenarios (optional)
+- [ ] Multiple camera support
+- [ ] Advanced data association (Hungarian algorithm)
+- [ ] Track re-identification after occlusion
+- [ ] Performance benchmarking
+- [ ] Integration with robot navigation stack
+
+## Code Quality
+
+### Style Guide
+
+This project follows the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html):
+
+- Classes use CamelCase
+- Functions use camelCase
+- Member variables use trailing underscore: `variable_`
+- Constants use kConstantName
+- Namespaces: lowercase
+- File names: lowercase with underscores
+
+### Static Analysis
+
+Run cppcheck before committing:
+
+```bash
+cppcheck --enable=all --std=c++17 --suppress=missingIncludeSystem \
+  --inline-suppr --quiet include/ libs/ app/ test/
+```
+
+### Compiler Warnings
+
+The project builds with strict warnings:
+
+```bash
+-Wall -Wextra -Wpedantic
+```
+
+## Algorithm Details
+
+### Depth Estimation
+
+For monocular camera, depth is estimated using bounding box height:
+
+```
+depth = (focal_length * average_human_height) / bbox_height_pixels
+```
+
+Assumptions:
+- Average human height: 1.7 meters (configurable)
+- Camera calibrated with known focal length
+- Person standing upright
+
+### Kalman Filter
+
+State vector: `[x, y, z, vx, vy, vz]` (position and velocity in 3D)
+
+Motion model: Constant velocity
+```
+x_k = x_{k-1} + v_{k-1} * dt
+v_k = v_{k-1}
+```
+
+Measurement: `[x, y, z]` (position only)
+
+### Data Association
+
+Uses IoU (Intersection over Union) matching:
+- Compute IoU between predicted track boxes and detected boxes
+- Match pairs with IoU > threshold (default 0.3)
+- Greedy assignment (Phase 0), Hungarian algorithm (Phase 1+)
+
+## Contributing
+
+### Pair Programming Workflow
+
+This project uses Test-Driven Development (TDD) and pair programming:
+
+1. **Driver**: Writes code
+2. **Navigator**: Reviews, suggests improvements
+3. Switch roles every 30 minutes
+
+### Commit Message Format
+
+```
+[module] Brief description
+
+- Detailed point 1
+- Detailed point 2
+
+Fixes #issue_number
+```
+
+### Pull Request Process
+
+1. Create feature branch: `git checkout -b feature/your-feature`
+2. Implement with tests (maintain 90%+ coverage)
+3. Run tests: `ctest`
+4. Run static analysis: `cppcheck`
+5. Update documentation if needed
+6. Submit PR with description
+
+## Troubleshooting
+
+### Build Issues
+
+**Problem**: CMake can't find OpenCV
+```bash
+# Solution: Install OpenCV
+sudo apt-get install libopencv-dev
+# Or specify path:
+cmake -DOpenCV_DIR=/path/to/opencv/build -S ./ -B build/
+```
+
+**Problem**: C++17 features not available
+```bash
+# Solution: Update compiler
+sudo apt-get install gcc-9 g++-9
+export CXX=g++-9
+```
+
+### Runtime Issues
+
+**Problem**: YOLO model not found
+```bash
+# Solution: Download YOLOv8 model
+mkdir -p models
+wget https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.onnx \
+  -O models/yolov8n.onnx
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Authors
+
+**Acme Robotics Development Team**
+- Student 1: Rahul Kumar - [GitHub](https://github.com/rahulk-99)
+- Student 2: [Partner Name] - [GitHub](https://github.com/partnerusername)
+
+**Course**: ENPM700 - Software Development for Robotics  
+**Institution**: University of Maryland  
+**Semester**: Fall 2025  
+
+## Acknowledgments
+
+- YOLOv8 by [Ultralytics](https://github.com/ultralytics/ultralytics)
+- GoogleTest framework
+- Template structure from [cpp-boilerplate-v2](https://github.com/TommyChangUMD/cpp-boilerplate-v2)
+- Project repository: [human-detector-tracker](https://github.com/rahulk-99/human-detector-tracker)
+
+## References
+
+1. Bewley, A., et al. "Simple Online and Realtime Tracking" (SORT Algorithm)
+2. Kalman, R. E. "A New Approach to Linear Filtering and Prediction Problems" (1960)
+3. Redmon, J., et al. "You Only Look Once: Unified, Real-Time Object Detection"
+4. OpenCV Documentation: https://docs.opencv.org/
+5. Google C++ Style Guide: https://google.github.io/styleguide/cppguide.html
+
+---
+
+**Project Status**: Phase 0 Complete ✅ | Phase 1 In Progress 🚧
+
+For questions or issues, please open a GitHub issue or contact the authors.

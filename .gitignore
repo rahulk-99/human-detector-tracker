@@ -1,0 +1,70 @@
+# Build directories
+build/
+build*/
+cmake-build-*/
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Compiled files
+*.o
+*.so
+*.a
+*.out
+*.exe
+
+# Test results
+Testing/
+*.gcda
+*.gcno
+*.gcov
+test_coverage/
+app_coverage/
+
+# Documentation
+docs/html/
+docs/latex/
+*.dox
+
+# Models (too large for git)
+models/*.onnx
+models/*.pt
+models/*.weights
+models/*.cfg
+
+# Data files
+data/*.mp4
+data/*.avi
+data/*.jpg
+data/*.png
+
+# Logs
+*.log
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Compilation database
+compile_commands.json
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Coverage reports
+*.info
+coverage/
+
+# Python (if used for scripts)
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+venv/
+
