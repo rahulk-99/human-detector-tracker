@@ -1,8 +1,6 @@
 # Human Perception System (HPS)
 
-[![CICD Workflow status](https://github.com/rahulk-99/human-detector-tracker/actions/workflows/run-unit-test-and-upload-codecov.yml/badge.svg)](https://github.com/rahulk-99/human-detector-tracker/actions/workflows/run-unit-test-and-upload-codecov.yml)
-[![codecov](https://codecov.io/gh/rahulk-99/human-detector-tracker/branch/main/graph/badge.svg)](https://codecov.io/gh/rahulk-99/human-detector-tracker)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![CICD Workflow status](https://github.com/rahulk-99/human-detector-tracker/actions/workflows/run-unit-test-and-upload-codecov.yml/badge.svg) [![codecov](https://codecov.io/gh/rahulk-99/human-detector-tracker/branch/main/graph/badge.svg)](https://codecov.io/gh/rahulk-99/human-detector-tracker) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## Overview
 
@@ -16,6 +14,11 @@ The **Human Perception System (HPS)** is a modular C++17 robotics perception mod
 - **Real-Time Processing**: Designed for 30 FPS operation without ROS dependency
 - **Depth Estimation**: Monocular depth estimation using bounding box height heuristic
 - **Modular Architecture**: Clean interfaces following SOLID principles and design patterns
+
+### 📄 Project Documentation
+
+**Phase 0 Proposal & Design:**
+- 📋 [Proposal Document & Video](https://drive.google.com/drive/folders/15M2WV5y34R-rcf8K7gPXKGJ_NX8htvk3?usp=sharing) - Design methodology and video explanation
 
 ## Table of Contents
 
@@ -107,32 +110,18 @@ ctest
 ctest --test-dir build/
 ```
 
-### Build with Code Coverage
+### Run Static Analysis with cppcheck
 
 ```bash
-# Install coverage tools
-sudo apt-get install gcovr lcov
-
-# Configure with coverage enabled
-cmake -D WANT_COVERAGE=ON -D CMAKE_BUILD_TYPE=Debug -S ./ -B build/
-
-# Build and generate coverage report
-cmake --build build/ --clean-first --target all test_coverage
-
-# View coverage report
-open build/test_coverage/index.html
+# Run cppcheck for static code analysis
+cppcheck --enable=all --error-exitcode=1 --std=c++17 \
+  --suppress=unusedFunction \
+  --suppress=missingInclude \
+  -I include/ \
+  $(find . -name "*.cpp" | grep -v "/build/")
 ```
 
-### Build with Static Analysis
-
-```bash
-# Install cppcheck
-sudo apt-get install cppcheck
-
-# Run static analysis
-cppcheck --enable=all --std=c++17 --suppress=missingIncludeSystem \
-  --inline-suppr --quiet include/ libs/ app/ test/ 2> cppcheck_report.txt
-```
+**Note**: For Phase 0, `unusedFunction` warnings are suppressed as many API methods are designed for Phase 1 usage.
 
 ### Generate Documentation
 
@@ -531,11 +520,11 @@ wget https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.onnx
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Authors
+## Authors (Group 2 - Mid-term)
 
 **Acme Robotics Development Team**
-- Student 1: Rahul Kumar - [GitHub](https://github.com/rahulk-99)
-- Student 2: [Partner Name] - [GitHub](https://github.com/partnerusername)
+- Driver: Rahul Kumar 
+- Navigator: Venkata Madhav Tadavarthi
 
 **Course**: ENPM700 - Software Development for Robotics  
 **Institution**: University of Maryland  
