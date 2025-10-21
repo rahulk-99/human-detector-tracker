@@ -26,6 +26,7 @@ The **Human Perception System (HPS)** is a modular C++17 robotics perception mod
 
 **Phase 0 Proposal & Design:**
 - 📋 [Proposal Document & Video](https://drive.google.com/drive/folders/15M2WV5y34R-rcf8K7gPXKGJ_NX8htvk3?usp=sharing) - Design methodology and video explanation
+- 📊 [Product Backlog (AIP Sheet)](https://docs.google.com/spreadsheets/d/1wcmKYTpv4yeAv1NeTeLlhB47EcRxOFroaWx42daGazo/edit?usp=sharing) - Agile Iterative Process tracking
 
 ## Table of Contents
 
@@ -34,7 +35,6 @@ The **Human Perception System (HPS)** is a modular C++17 robotics perception mod
 - [Installation](#installation)
 - [Usage](#usage)
 - [Testing](#testing)
-- [Documentation](#documentation)
 - [UML Diagrams](#uml-diagrams)
 - [Design Patterns](#design-patterns)
 - [Project Structure](#project-structure)
@@ -224,32 +224,6 @@ The project aims for **90%+ code coverage**. Current test suites:
 - **Coordinate Transformation Tests**: Image→Robot frame conversion
 - **PerceptionPipeline Tests**: End-to-end integration
 
-## Documentation
-
-### Doxygen Documentation
-
-All public APIs are documented using Doxygen format in header files:
-
-```cpp
-/**
- * @brief Detect humans in an image frame
- * 
- * @param frame Input image as raw data (BGR format)
- * @param width Width of the image in pixels
- * @param height Height of the image in pixels
- * @param channels Number of color channels (3 for RGB/BGR)
- * @return std::vector<Detection> Vector of detected humans
- */
-std::vector<Detection> detect(const unsigned char* frame,
-                              int width, int height, int channels);
-```
-
-Generate and view documentation:
-
-```bash
-cmake --build build/ --target docs
-open docs/html/index.html
-```
 
 ## UML Diagrams
 
@@ -257,7 +231,7 @@ open docs/html/index.html
 
 Shows complete class hierarchy, interfaces, and relationships.
 
-![Class Diagram](docs/uml/class_diagram.png)
+![Class Diagram](docs/uml/class_diagram_UML.png)
 
 See: [`docs/uml/class_diagram.puml`](docs/uml/class_diagram.puml)
 
@@ -472,7 +446,7 @@ This project uses Test-Driven Development (TDD) and pair programming:
 
 1. **Driver**: Writes code
 2. **Navigator**: Reviews, suggests improvements
-3. Switch roles every 30 minutes
+3. Switch roles each phase
 
 ### Commit Message Format
 
@@ -484,15 +458,6 @@ This project uses Test-Driven Development (TDD) and pair programming:
 
 Fixes #issue_number
 ```
-
-### Pull Request Process
-
-1. Create feature branch: `git checkout -b feature/your-feature`
-2. Implement with tests (maintain 90%+ coverage)
-3. Run tests: `ctest`
-4. Run static analysis: `cppcheck`
-5. Update documentation if needed
-6. Submit PR with description
 
 ## Troubleshooting
 
@@ -530,8 +495,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Authors (Group 2 - Mid-term)
 
 **Acme Robotics Development Team**
-- Driver: Rahul Kumar - [GitHub](https://github.com/rahulk-99)
-- Navigator: Venkata Madhav Tadavarthi - [GitHub](https://github.com/madhav2133)
+- Driver: Rahul Kumar
+- Navigator: Venkata Madhav Tadavarthi
 
 **Course**: ENPM700 - Software Development for Robotics  
 **Institution**: University of Maryland  
