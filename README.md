@@ -25,7 +25,7 @@ The **Human Perception System (HPS)** is a modular C++17 robotics perception mod
 ### 📄 Project Documentation
 
 **Phase 0 Proposal & Design:**
-- 📋 [Proposal Document & Video](https://drive.google.com/drive/folders/15M2WV5y34R-rcf8K7gPXKGJ_NX8htvk3?usp=sharing) - Design methodology and video explanation
+- 📋 [Proposal Document, QuadChart & Video](https://drive.google.com/drive/folders/15M2WV5y34R-rcf8K7gPXKGJ_NX8htvk3?usp=sharing) - Design methodology and video explanation
 - 📊 [Product Backlog (AIP Sheet)](https://docs.google.com/spreadsheets/d/1wcmKYTpv4yeAv1NeTeLlhB47EcRxOFroaWx42daGazo/edit?usp=sharing) - Agile Iterative Process tracking
 
 ## Table of Contents
