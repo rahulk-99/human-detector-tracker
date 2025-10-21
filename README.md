@@ -8,6 +8,13 @@
 
 The **Human Perception System (HPS)** is a modular C++17 robotics perception module designed for Acme Robotics. It detects and tracks humans (N≥1) in real-time using monocular camera input and outputs their 3D positions directly in the robot's reference frame.
 
+## Authors
+
+### Phase 0
+
+- Rahul Kumar (Driver)
+- Venkata Madhav Tadavarthi (Navigator)
+
 ### Main Features
 
 - **Human Detection**: YOLOv8-based detection with configurable confidence thresholds
@@ -370,7 +377,7 @@ phase0/
 
 ## Phase 0 Status
 
-### Completed ✅
+### Completed 
 
 - [x] Complete class structure with interfaces
 - [x] All header files with Doxygen documentation
@@ -535,7 +542,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Acme Robotics Development Team**
 - Student 1: Rahul Kumar - [GitHub](https://github.com/rahulk-99)
-- Student 2: [Partner Name] - [GitHub](https://github.com/partnerusername)
+- Student 2: [Partner Name] - [GitHub](https://github.com/madhav2133)
 
 **Course**: ENPM700 - Software Development for Robotics  
 **Institution**: University of Maryland  

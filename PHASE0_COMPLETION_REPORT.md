@@ -2,7 +2,7 @@
 
 **Project**: Human Perception System (HPS)  
 **Date**: October 19, 2025  
-**Status**: ✅ **COMPLETED**
+**Status**: **COMPLETED**
 
 ---
 
@@ -438,6 +438,6 @@ All deliverables met, architecture solid, ready for implementation.
 
 **Document Version**: 1.0  
 **Date**: October 19, 2025  
-**Authors**: [Student 1], [Student 2]  
+**Authors**: Rahul Kumar (Driver), Venkata Madhav Tadavarthi (Navigator)  
 **Status**: APPROVED FOR PHASE 1
 
