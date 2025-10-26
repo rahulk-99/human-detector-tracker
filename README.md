@@ -8,6 +8,11 @@ The **Human Perception System (HPS)** is a modular C++17 robotics perception mod
 
 ## Authors
 
+### Phase 1
+
+- Venkata Madhav Tadavarthi (Driver)
+- Rahul Kumar (Navigator)
+
 ### Phase 0
 
 - Rahul Kumar (Driver)
@@ -231,25 +236,25 @@ The project aims for **90%+ code coverage**. Current test suites:
 
 Shows complete class hierarchy, interfaces, and relationships.
 
-![Class Diagram](docs/uml/class_diagram_UML.png)
+![Class Diagram](./UML/initial/class_diagram_UML.png)
 
-See: [`docs/uml/class_diagram.puml`](docs/uml/class_diagram.puml)
+See: [`UML/initial/class_diagram.puml`](./UML/initial/class_diagram.puml)
 
 ### Sequence Diagram
 
 Illustrates frame processing workflow from detection to tracking.
 
-![Sequence Diagram](docs/uml/sequence_diagram.png)
+![Sequence Diagram](./UML/initial/sequence_diagram.png)
 
-See: [`docs/uml/sequence_diagram.puml`](docs/uml/sequence_diagram.puml)
+See: [`UML/initial/sequence_diagram.puml`](./UML/initial/sequence_diagram.puml)
 
 ### Activity Diagram
 
 Depicts the perception pipeline decision flow and processing steps.
 
-![Activity Diagram](docs/uml/activity_diagram.png)
+![Activity Diagram](./UML/initial/activity_diagram.png)
 
-See: [`docs/uml/activity_diagram.puml`](docs/uml/activity_diagram.puml)
+See: [`UML/initial/activity_diagram.puml`](./UML/initial/activity_diagram.puml)
 
 ### Generate UML Diagrams
 
