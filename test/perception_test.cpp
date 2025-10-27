@@ -96,14 +96,14 @@ TEST(DetectionTest, ValidityCheck) {
 // ============================================================================
 
 TEST(YOLODetectorTest, Initialization) {
-  detection::YOLODetector detector("models/yolov8n.onnx");
+  detection::YOLODetector detector("models/yolov8n.pt");
   EXPECT_TRUE(detector.isInitialized());
   EXPECT_FLOAT_EQ(detector.getConfidenceThreshold(), 0.5f);
   EXPECT_EQ(detector.getInputSize(), 640);
 }
 
 TEST(YOLODetectorTest, MockDetection) {
-  detection::YOLODetector detector("models/yolov8n.onnx");
+  detection::YOLODetector detector("models/yolov8n.pt");
   
   // Create dummy frame
   int width = 640, height = 480;
@@ -116,7 +116,7 @@ TEST(YOLODetectorTest, MockDetection) {
 }
 
 TEST(YOLODetectorTest, ThresholdSetting) {
-  detection::YOLODetector detector("models/yolov8n.onnx");
+  detection::YOLODetector detector("models/yolov8n.pt");
   detector.setConfidenceThreshold(0.7f);
   EXPECT_FLOAT_EQ(detector.getConfidenceThreshold(), 0.7f);
 }
@@ -324,7 +324,7 @@ TEST(CoordinateTransformerTest, ImageToRobotFrame) {
 
 TEST(PerceptionPipelineTest, Initialization) {
   auto detector = std::make_shared<detection::YOLODetector>(
-      "models/yolov8n.onnx");
+      "models/yolov8n.pt");
   auto tracker = std::make_shared<tracking::KalmanTracker>();
   core::CameraModel camera;
   auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
@@ -337,7 +337,7 @@ TEST(PerceptionPipelineTest, Initialization) {
 
 TEST(PerceptionPipelineTest, FrameProcessing) {
   auto detector = std::make_shared<detection::YOLODetector>(
-      "models/yolov8n.onnx");
+      "models/yolov8n.pt");
   auto tracker = std::make_shared<tracking::KalmanTracker>();
   core::CameraModel camera;
   auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
