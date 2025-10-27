@@ -158,6 +158,65 @@ bool YOLODetector::initialize() {
 #endif
 }
 
+void YOLODetector::setConfidenceThreshold(float threshold) {
+  if (threshold < 0.0f || threshold > 1.0f) {
+    throw std::invalid_argument("Confidence threshold must be between 0.0 and 1.0");
+  }
+  confidenceThreshold_ = threshold;
+}
+
+float YOLODetector::getConfidenceThreshold() const {
+  return confidenceThreshold_;
+}
+
+void YOLODetector::setNmsThreshold(float threshold) {
+  if (threshold < 0.0f || threshold > 1.0f) {
+    throw std::invalid_argument("NMS threshold must be between 0.0 and 1.0");
+  }
+  nmsThreshold_ = threshold;
+}
+
+float YOLODetector::getNmsThreshold() const {
+  return nmsThreshold_;
+}
+
+bool YOLODetector::isInitialized() const {
+  return initialized_;
+}
+
+int YOLODetector::getInputSize() const {
+  return inputSize_;
+}
+
+void YOLODetector::preprocessImage([[maybe_unused]] const unsigned char* frame,
+                                  [[maybe_unused]] int width,
+                                  [[maybe_unused]] int height,
+                                  [[maybe_unused]] int channels) {
+#ifdef HAVE_OPENCV
+  try {
+    // Convert raw data to OpenCV Mat
+    cv::Mat image(height, width, CV_8UC3, const_cast<unsigned char*>(frame));
+    
+    // Convert BGR to RGB if needed (OpenCV uses BGR by default)
+    cv::Mat rgbImage;
+    cv::cvtColor(image, rgbImage, cv::COLOR_BGR2RGB);
+    
+    // Create blob from image
+    cv::Mat blob;
+    cv::dnn::blobFromImage(rgbImage, blob, 1.0/255.0, 
+                          cv::Size(inputSize_, inputSize_), 
+                          cv::Scalar(0, 0, 0), true, false, CV_32F);
+    
+    // Set input to the network
+    pImpl_->net_.setInput(blob);
+    
+  } catch (const std::exception& e) {
+    std::cerr << "[YOLODetector] Preprocessing failed: " << e.what() << std::endl;
+  }
+#endif
+}
+
+
 
 }  // namespace detection
 }  // namespace perception
