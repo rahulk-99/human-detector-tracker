@@ -216,6 +216,80 @@ void YOLODetector::preprocessImage([[maybe_unused]] const unsigned char* frame,
 #endif
 }
 
+std::vector<Detection> YOLODetector::postprocessOutput([[maybe_unused]] int originalWidth,
+                                                      [[maybe_unused]] int originalHeight) {
+  std::vector<Detection> detections;
+  
+#ifdef HAVE_OPENCV
+  try {
+    // Get output layers
+    std::vector<cv::Mat> outputs;
+    pImpl_->net_.forward(outputs, pImpl_->net_.getUnconnectedOutLayersNames());
+    
+    // Process each output
+    for (const auto& output : outputs) {
+      // YOLO output format: [batch, num_detections, 85]
+      // 85 = 4 (bbox) + 1 (confidence) + 80 (class probabilities)
+      
+      for (int i = 0; i < output.rows; ++i) {
+        const float* data = output.ptr<float>(i);
+        
+        // Extract confidence and class probabilities
+        float confidence = data[4];
+        
+        // Find class with highest probability
+        int classId = -1;
+        float maxClassProb = 0.0f;
+        for (int j = 5; j < 85; ++j) {
+          if (data[j] > maxClassProb) {
+            maxClassProb = data[j];
+            classId = j - 5;
+          }
+        }
+        
+        // Calculate final confidence
+        float finalConfidence = confidence * maxClassProb;
+        
+        // Filter by confidence threshold
+        if (finalConfidence >= confidenceThreshold_) {
+          // Extract bounding box coordinates (center_x, center_y, width, height)
+          float centerX = data[0];
+          float centerY = data[1];
+          float width = data[2];
+          float height = data[3];
+          
+          // Scale coordinates back to original image size
+          float scaleX = static_cast<float>(originalWidth) / inputSize_;
+          float scaleY = static_cast<float>(originalHeight) / inputSize_;
+          
+          centerX *= scaleX;
+          centerY *= scaleY;
+          width *= scaleX;
+          height *= scaleY;
+          
+          // Create bounding box
+          BoundingBox bbox(centerX, centerY, width, height);
+          
+          // Get class name
+          std::string className = (classId >= 0 && static_cast<size_t>(classId) < pImpl_->classNames_.size()) 
+                                 ? pImpl_->classNames_[classId] 
+                                 : "unknown";
+          
+          // Create detection
+          Detection detection(bbox, finalConfidence, classId, className);
+          detections.push_back(detection);
+        }
+      }
+    }
+    
+  } catch (const std::exception& e) {
+    std::cerr << "[YOLODetector] Postprocessing failed: " << e.what() << std::endl;
+  }
+#endif
+  
+  return detections;
+}
+
 
 
 }  // namespace detection
