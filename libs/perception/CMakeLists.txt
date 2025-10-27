@@ -9,12 +9,12 @@ endif()
 
 # Collect all source files
 set(PERCEPTION_SOURCES
-  # Detection module
+  # Detection module codes
   detection/BoundingBox.cpp
   detection/Detection.cpp
   detection/YOLODetector.cpp
   
-  # Tracking module
+  # Tracking module codes
   tracking/Track.cpp
   tracking/KalmanFilter.cpp
   tracking/KalmanTracker.cpp
