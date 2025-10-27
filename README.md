@@ -6,6 +6,20 @@
 
 The **Human Perception System (HPS)** is a modular C++17 robotics perception module designed for Acme Robotics. It detects and tracks humans (N≥1) in real-time using monocular camera input and outputs their 3D positions directly in the robot's reference frame.
 
+## Purpose
+
+The purpose of the Human Perception System (HPS) is to provide a robust and modular real-time solution for detecting and tracking humans using a monocular camera, enabling robots at Acme Robotics to accurately perceive the presence and location of people in their environment. By outputting 2D and 3D positions in the robot's reference frame, the system enhances downstream navigation and safety functions, with particular emphasis on reliability, extensibility, and integration readiness for practical robotics deployments.
+
+## About Us
+
+### Venkata Madhav Tadavarthi
+
+My name is Venkata Madhav, I am currently pursuing my Masters in Robotics at University of Maryland, College Park. I am passionate about robotics, specifically underwater robots. My research interests include perception, planning and controls. I am excited to contribute to this project!
+
+### Rahul Kumar
+
+
+
 ## Authors
 
 ### Phase 1
@@ -27,11 +41,15 @@ The **Human Perception System (HPS)** is a modular C++17 robotics perception mod
 - **Depth Estimation**: Monocular depth estimation using bounding box height heuristic
 - **Modular Architecture**: Clean interfaces following SOLID principles and design patterns
 
-### 📄 Project Documentation
+### Project Documentation
+
+**Phase 1 Sprint Planning:**
+
+- Here's the link to Sprint Planning Notes & Review - [Google Docs](https://drive.google.com/drive/folders/1-nCwMyBTdMd0FeAymqdSMDeUdiPkOb5H?usp=sharing)
 
 **Phase 0 Proposal & Design:**
-- 📋 [Proposal Document, QuadChart & Video](https://drive.google.com/drive/folders/15M2WV5y34R-rcf8K7gPXKGJ_NX8htvk3?usp=sharing) - Design methodology and video explanation
-- 📊 [Product Backlog (AIP Sheet)](https://docs.google.com/spreadsheets/d/1wcmKYTpv4yeAv1NeTeLlhB47EcRxOFroaWx42daGazo/edit?usp=sharing) - Agile Iterative Process tracking
+- [Proposal Document, QuadChart & Video](https://drive.google.com/drive/folders/15M2WV5y34R-rcf8K7gPXKGJ_NX8htvk3?usp=sharing) - Design methodology and video explanation
+- [Product Backlog (AIP Sheet)](https://docs.google.com/spreadsheets/d/1wcmKYTpv4yeAv1NeTeLlhB47EcRxOFroaWx42daGazo/edit?usp=sharing) - Agile Iterative Process tracking
 
 ## Table of Contents
 
