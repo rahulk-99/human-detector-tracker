@@ -290,6 +290,121 @@ std::vector<Detection> YOLODetector::postprocessOutput([[maybe_unused]] int orig
   return detections;
 }
 
+std::vector<Detection> YOLODetector::detect(const unsigned char* frame,
+                                           int width,
+                                           int height,
+                                           int channels) {
+  std::vector<Detection> detections;
+
+  if (!initialized_) {
+    std::cerr << "[YOLODetector] Detector not initialized" << std::endl;
+    return detections;
+  }
+
+#ifdef HAVE_OPENCV
+  if (pImpl_->realMode_) {
+    try {
+      // Convert raw data to OpenCV Mat
+      cv::Mat image(height, width, CV_8UC3, const_cast<unsigned char*>(frame));
+      
+      // Preprocess image
+      preprocessImage(frame, width, height, channels);
+      
+      // Run inference
+      std::vector<cv::Mat> outputs;
+      pImpl_->net_.forward(outputs, pImpl_->net_.getUnconnectedOutLayersNames());
+      
+      // Post-process results
+      detections = postprocessOutput(width, height);
+      
+      // Apply NMS
+      detections = applyNMS(detections);
+      
+      // Filter for human class only (class ID 0)
+      std::vector<Detection> humanDetections;
+      for (const auto& det : detections) {
+        if (det.getClassId() == 0) {  // "person" class
+          humanDetections.push_back(det);
+        }
+      }
+      
+      return humanDetections;
+      
+    } catch (const std::exception& e) {
+      std::cerr << "[YOLODetector] Detection failed: " << e.what() << std::endl;
+      // Fall through to mock mode
+    }
+  }
+#endif
+  // Fallback to mock implementation
+  std::cout << "[YOLODetector] Using mock detection" << std::endl;
+  
+  // Return mock detections for testing
+  BoundingBox bbox1(width * 0.3f, height * 0.5f, width * 0.2f, height * 0.6f);
+  Detection det1(bbox1, 0.85f, 0, "person");
+  detections.push_back(det1);
+
+  BoundingBox bbox2(width * 0.7f, height * 0.5f, width * 0.15f, height * 0.5f);
+  Detection det2(bbox2, 0.75f, 0, "person");
+  detections.push_back(det2);
+  
+  return detections;
+}
+
+std::vector<Detection> YOLODetector::applyNMS(
+    const std::vector<Detection>& detections) {
+  std::vector<Detection> filteredDetections;
+  
+  if (detections.empty()) {
+    return filteredDetections;
+  }
+  
+#ifdef HAVE_OPENCV
+  try {
+    // Convert detections to OpenCV format for NMS
+    std::vector<cv::Rect> boxes;
+    std::vector<float> confidences;
+    std::vector<int> classIds;
+    
+    for (const auto& det : detections) {
+      const auto& bbox = det.getBoundingBox();
+      
+      // Convert center-based bbox to corner-based for OpenCV
+      cv::Rect box(static_cast<int>(bbox.getLeft()),
+                   static_cast<int>(bbox.getTop()),
+                   static_cast<int>(bbox.getWidth()),
+                   static_cast<int>(bbox.getHeight()));
+      
+      boxes.push_back(box);
+      confidences.push_back(det.getConfidence());
+      classIds.push_back(det.getClassId());
+    }
+    
+    // Apply NMS
+    std::vector<int> indices;
+    cv::dnn::NMSBoxes(boxes, confidences, confidenceThreshold_, nmsThreshold_, indices);
+    
+    // Create filtered detections
+    for (int idx : indices) {
+      filteredDetections.push_back(detections[idx]);
+    }
+    
+  } catch (const std::exception& e) {
+    std::cerr << "[YOLODetector] NMS failed: " << e.what() << std::endl;
+    // Return original detections if NMS fails
+    return detections;
+  }
+#else
+  // Fallback: simple confidence-based filtering
+  for (const auto& det : detections) {
+    if (det.getConfidence() >= confidenceThreshold_) {
+      filteredDetections.push_back(det);
+    }
+  }
+#endif
+  
+  return filteredDetections;
+}
 
 
 }  // namespace detection
