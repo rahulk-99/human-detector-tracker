@@ -238,7 +238,7 @@ Shows complete class hierarchy, interfaces, and relationships.
 
 ![Class Diagram](./UML/initial/class_diagram_UML.png)
 
-See: [`UML/initial/class_diagram.puml`](./UML/initial/class_diagram.puml)
+See: [`UML/initial/class_diagram_UML.pdf`](./UML/initial/class_diagram_UML.pdf)
 
 ### Sequence Diagram
 
@@ -246,7 +246,7 @@ Illustrates frame processing workflow from detection to tracking.
 
 ![Sequence Diagram](./UML/initial/sequence_diagram.png)
 
-See: [`UML/initial/sequence_diagram.puml`](./UML/initial/sequence_diagram.puml)
+See: [`UML/initial/sequence_diagram.pdf`](./UML/initial/sequence_diagram.pdf)
 
 ### Activity Diagram
 
@@ -254,7 +254,7 @@ Depicts the perception pipeline decision flow and processing steps.
 
 ![Activity Diagram](./UML/initial/activity_diagram.png)
 
-See: [`UML/initial/activity_diagram.puml`](./UML/initial/activity_diagram.puml)
+See: [`UML/initial/activity_diagram.pdf`](./UML/initial/activity_diagram.pdf)
 
 ### Generate UML Diagrams
 
