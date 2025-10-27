@@ -118,6 +118,10 @@ void Track::setVelocity(const utils::Position3D& velocity) {
   velocity_ = velocity;
 }
 
+void Track::setPosition(const utils::Position3D& position) {
+  position_ = position;
+}
+
 bool Track::shouldDelete(int maxAge) const {
   return missCount_ > maxAge || state_ == TrackState::LOST;
 }
