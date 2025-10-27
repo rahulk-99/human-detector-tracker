@@ -143,6 +143,12 @@ class Track {
   void setVelocity(const utils::Position3D& velocity);
 
   /**
+   * @brief Set position estimate
+   * @param position Position vector
+   */
+  void setPosition(const utils::Position3D& position);
+
+  /**
    * @brief Check if track should be deleted (too many misses)
    * @param maxAge Maximum allowed age without updates
    * @return true if track should be deleted

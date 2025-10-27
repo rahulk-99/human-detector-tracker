@@ -6,7 +6,27 @@
 
 The **Human Perception System (HPS)** is a modular C++17 robotics perception module designed for Acme Robotics. It detects and tracks humans (N≥1) in real-time using monocular camera input and outputs their 3D positions directly in the robot's reference frame.
 
+## Purpose
+
+The purpose of the Human Perception System (HPS) is to provide a robust and modular real-time solution for detecting and tracking humans using a monocular camera, enabling robots at Acme Robotics to accurately perceive the presence and location of people in their environment. By outputting 2D and 3D positions in the robot's reference frame, the system enhances downstream navigation and safety functions, with particular emphasis on reliability, extensibility, and integration readiness for practical robotics deployments.
+
+## About Us
+
+### Venkata Madhav Tadavarthi
+
+My name is Venkata Madhav, I am currently pursuing my Masters in Robotics at University of Maryland, College Park. I am passionate about robotics, specifically underwater robots. My research interests include perception, planning and controls. I am excited to contribute to this project!
+
+### Rahul Kumar
+
+My name is Rahul Kumar. I am a Robotics Master's student at the University of Maryland, College Park, with interest in Robot Learning, Computer Vision, and Autonomous Systems. This project covers multiple domains, which makes it exciting to work on.
+
+
 ## Authors
+
+### Phase 1
+
+- Venkata Madhav Tadavarthi (Driver)
+- Rahul Kumar (Navigator)
 
 ### Phase 0
 
@@ -22,11 +42,15 @@ The **Human Perception System (HPS)** is a modular C++17 robotics perception mod
 - **Depth Estimation**: Monocular depth estimation using bounding box height heuristic
 - **Modular Architecture**: Clean interfaces following SOLID principles and design patterns
 
-### 📄 Project Documentation
+### Project Documentation
+
+**Phase 1 Sprint Planning:**
+
+- Here's the link to Sprint Planning Notes & Review - [Google Docs](https://drive.google.com/drive/folders/1-nCwMyBTdMd0FeAymqdSMDeUdiPkOb5H?usp=sharing)
 
 **Phase 0 Proposal & Design:**
-- 📋 [Proposal Document, QuadChart & Video](https://drive.google.com/drive/folders/15M2WV5y34R-rcf8K7gPXKGJ_NX8htvk3?usp=sharing) - Design methodology and video explanation
-- 📊 [Product Backlog (AIP Sheet)](https://docs.google.com/spreadsheets/d/1wcmKYTpv4yeAv1NeTeLlhB47EcRxOFroaWx42daGazo/edit?usp=sharing) - Agile Iterative Process tracking
+- [Proposal Document, QuadChart & Video](https://drive.google.com/drive/folders/15M2WV5y34R-rcf8K7gPXKGJ_NX8htvk3?usp=sharing) - Design methodology and video explanation
+- [Product Backlog (AIP Sheet)](https://docs.google.com/spreadsheets/d/1wcmKYTpv4yeAv1NeTeLlhB47EcRxOFroaWx42daGazo/edit?usp=sharing) - Agile Iterative Process tracking
 
 ## Table of Contents
 
@@ -231,25 +255,25 @@ The project aims for **90%+ code coverage**. Current test suites:
 
 Shows complete class hierarchy, interfaces, and relationships.
 
-![Class Diagram](docs/uml/class_diagram_UML.png)
+![Class Diagram](./UML/initial/class_diagram_UML.png)
 
-See: [`docs/uml/class_diagram.puml`](docs/uml/class_diagram.puml)
+See: [`UML/initial/class_diagram_UML.pdf`](./UML/initial/class_diagram_UML.pdf)
 
 ### Sequence Diagram
 
 Illustrates frame processing workflow from detection to tracking.
 
-![Sequence Diagram](docs/uml/sequence_diagram.png)
+![Sequence Diagram](./UML/initial/sequence_diagram.png)
 
-See: [`docs/uml/sequence_diagram.puml`](docs/uml/sequence_diagram.puml)
+See: [`UML/initial/sequence_diagram.pdf`](./UML/initial/sequence_diagram.pdf)
 
 ### Activity Diagram
 
 Depicts the perception pipeline decision flow and processing steps.
 
-![Activity Diagram](docs/uml/activity_diagram.png)
+![Activity Diagram](./UML/initial/activity_diagram.png)
 
-See: [`docs/uml/activity_diagram.puml`](docs/uml/activity_diagram.puml)
+See: [`UML/initial/activity_diagram.pdf`](./UML/initial/activity_diagram.pdf)
 
 ### Generate UML Diagrams
 
