@@ -3,7 +3,7 @@
  * @brief Implementation of KalmanTracker class
  * @author Acme Robotics
  * 
- * Phase 0: Stub implementation with basic tracking logic
+ * Phase 1: Enhanced implementation with proper KalmanFilter integration
  */
 
 #include "perception/tracking/KalmanTracker.hpp"
@@ -116,7 +116,35 @@ void KalmanTracker::setIouThreshold(float threshold) {
 
 void KalmanTracker::predictTracks() {
   for (auto& track : tracks_) {
-    track.predict(currentTimestamp_);
+    int trackId = track.getId();
+    
+    // Use KalmanFilter for prediction if available
+    if (kalmanFilters_.find(trackId) != kalmanFilters_.end()) {
+      double dt = currentTimestamp_ - track.getTimestamp();
+      if (dt > 0.0) {
+        try {
+          kalmanFilters_[trackId].predict(static_cast<float>(dt));
+          
+          // Update track with KalmanFilter prediction
+          auto kalmanState = kalmanFilters_[trackId].getState();
+          if (kalmanState.size() >= 6) {
+            utils::Position3D predictedPos(kalmanState[0], kalmanState[1], kalmanState[2]);
+            utils::Position3D predictedVel(kalmanState[3], kalmanState[4], kalmanState[5]);
+            
+            // Update track with predicted state
+            track.setPosition(predictedPos);
+            track.setVelocity(predictedVel);
+            track.predict(currentTimestamp_);
+          }
+        } catch (const std::exception& e) {
+          // Fallback to simple prediction if KalmanFilter fails
+          track.predict(currentTimestamp_);
+        }
+      }
+    } else {
+      // Fallback to simple prediction if no KalmanFilter
+      track.predict(currentTimestamp_);
+    }
   }
 }
 
@@ -154,25 +182,39 @@ std::vector<std::pair<int, int>> KalmanTracker::associateDetectionsToTracks(
 void KalmanTracker::createNewTrack(const detection::Detection& detection) {
   int trackId = generateTrackId();
   
-  // Phase 0: Estimate position from bounding box center (mock depth)
+  // Estimate position from bounding box center (mock depth)
   const auto& bbox = detection.getBoundingBox();
   utils::Position3D position(bbox.getX() / 100.0f, bbox.getY() / 100.0f, 5.0f);
 
   Track newTrack(trackId, bbox, position, currentTimestamp_);
   tracks_.push_back(newTrack);
 
-  // Initialize Kalman filter for this track
+  // Initialize Kalman filter for this track with proper covariance
   KalmanFilter kf(6, 3);
   std::vector<float> initialState = {
       position.getX(), position.getY(), position.getZ(),
       0.0f, 0.0f, 0.0f  // zero initial velocity
   };
+  
+  // Initialize covariance matrix with reasonable uncertainties
   std::vector<float> initialCov(36, 0.0f);
-  for (int i = 0; i < 6; ++i) {
-    initialCov[i * 6 + i] = 1.0f;
+  // Position uncertainty (diagonal elements)
+  initialCov[0 * 6 + 0] = 1.0f;   // x position uncertainty
+  initialCov[1 * 6 + 1] = 1.0f;   // y position uncertainty  
+  initialCov[2 * 6 + 2] = 1.0f;   // z position uncertainty
+  // Velocity uncertainty (higher since we start with zero velocity)
+  initialCov[3 * 6 + 3] = 10.0f;  // x velocity uncertainty
+  initialCov[4 * 6 + 4] = 10.0f;  // y velocity uncertainty
+  initialCov[5 * 6 + 5] = 10.0f;  // z velocity uncertainty
+  
+  try {
+    kf.initialize(initialState, initialCov);
+    kalmanFilters_[trackId] = kf;
+  } catch (const std::exception& e) {
+    std::cerr << "Failed to initialize KalmanFilter for track " << trackId 
+              << ": " << e.what() << std::endl;
+    // Continue without KalmanFilter - track will use simple prediction
   }
-  kf.initialize(initialState, initialCov);
-  kalmanFilters_[trackId] = kf;
 }
 
 void KalmanTracker::updateTrack(int trackIdx,
@@ -180,15 +222,33 @@ void KalmanTracker::updateTrack(int trackIdx,
   const auto& bbox = detection.getBoundingBox();
   utils::Position3D position(bbox.getX() / 100.0f, bbox.getY() / 100.0f, 5.0f);
 
+  // Update track with detection
   tracks_[trackIdx].update(bbox, position, currentTimestamp_);
 
-  // Update Kalman filter
+  // Update Kalman filter with measurement
   int trackId = tracks_[trackIdx].getId();
   if (kalmanFilters_.find(trackId) != kalmanFilters_.end()) {
-    std::vector<float> measurement = {
-        position.getX(), position.getY(), position.getZ()
-    };
-    kalmanFilters_[trackId].update(measurement);
+    try {
+      std::vector<float> measurement = {
+          position.getX(), position.getY(), position.getZ()
+      };
+      kalmanFilters_[trackId].update(measurement);
+      
+      // Update track with KalmanFilter's refined state estimate
+      auto kalmanState = kalmanFilters_[trackId].getState();
+      if (kalmanState.size() >= 6) {
+        utils::Position3D refinedPos(kalmanState[0], kalmanState[1], kalmanState[2]);
+        utils::Position3D refinedVel(kalmanState[3], kalmanState[4], kalmanState[5]);
+        
+        // Update track with KalmanFilter's state estimate
+        tracks_[trackIdx].setPosition(refinedPos);
+        tracks_[trackIdx].setVelocity(refinedVel);
+      }
+    } catch (const std::exception& e) {
+      // Log error but continue with track update
+      std::cerr << "KalmanFilter update failed for track " << trackId 
+                << ": " << e.what() << std::endl;
+    }
   }
 }
 
