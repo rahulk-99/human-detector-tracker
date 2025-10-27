@@ -406,7 +406,6 @@ std::vector<Detection> YOLODetector::applyNMS(
   return filteredDetections;
 }
 
-
 }  // namespace detection
 }  // namespace perception
 
