@@ -18,6 +18,7 @@ My name is Venkata Madhav, I am currently pursuing my Masters in Robotics at Uni
 
 ### Rahul Kumar
 
+My name is Rahul Kumar. I am a Robotics Master's student at the University of Maryland, College Park, with interest in Robot Learning, Computer Vision, and Autonomous Systems. This project covers multiple domains, which makes it exciting to work on.
 
 
 ## Authors
