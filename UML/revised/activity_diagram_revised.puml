@@ -1,0 +1,66 @@
+@startuml
+
+' Human Perception System - Revised Activity Diagram Phase 1
+
+start
+
+:Receive frame from camera/video;
+
+partition "YOLO Detection Phase 1" {
+    :Load image into OpenCV Mat;
+    :Resize to 640x640;
+    :Normalize pixels [0,1];
+    :Run YOLO inference;
+    :Parse detections;
+    :Filter by confidence;
+    :Apply NMS;
+    :Get human detections;
+}
+
+partition "Coordinate Transformation" {
+    :For each detection;
+    :Extract bbox center;
+    :Estimate depth from height;
+    :Convert to camera frame;
+    :Apply rotation;
+    :Apply translation;
+    :Get 3D position;
+}
+
+partition "Kalman Tracking Phase 1" {
+    :Predict all tracks;
+    :Build transition matrix;
+    :Propagate state;
+    :Compute IoU;
+    
+    if (IoU over threshold?) then (yes)
+        :Associate to track;
+        :Update Kalman filter;
+        note right
+            Compute gain
+            Update covariance
+        end note
+    else (no)
+        :Create new track;
+    endif
+    
+    :Delete old tracks;
+}
+
+partition "Output Generation" {
+    :Get active tracks;
+    :Create output;
+    
+    if (Visualization?) then (yes)
+        :Draw boxes;
+        :Show IDs;
+    else (no)
+        :Skip visualization;
+    endif
+}
+
+:Return PerceptionOutput;
+
+stop
+
+@enduml
