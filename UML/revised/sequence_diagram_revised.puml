@@ -1,0 +1,54 @@
+@startuml
+
+' Human Perception System - Revised Sequence Diagram Phase 1
+
+actor User as User
+participant Pipeline as Pipeline
+participant Detector as Detector  
+participant Tracker as Tracker
+participant Kalman as Kalman
+
+User -> Pipeline: processFrame()
+
+Pipeline -> Detector: detect()
+activate Detector
+Detector -> Detector: preprocessImage()
+Detector -> Detector: Run YOLO inference
+Detector -> Detector: postprocessOutput()
+Detector -> Detector: applyNMS()
+Detector --> Pipeline: detections[]
+deactivate Detector
+
+loop For each detection
+  Pipeline -> Pipeline: Transform to 3D
+end
+
+Pipeline -> Tracker: update()
+activate Tracker
+
+Tracker -> Tracker: predictTracks()
+loop For each track
+  Tracker -> Kalman: predict()
+  activate Kalman
+  Kalman -> Kalman: Matrix operations
+  Kalman --> Tracker: predicted state
+  deactivate Kalman
+end
+
+Tracker -> Tracker: Associate detections
+loop For matched pairs
+  Tracker -> Kalman: update()
+  activate Kalman
+  Kalman -> Kalman: Compute gain
+  Kalman -> Kalman: Update state
+  Kalman --> Tracker: updated
+  deactivate Kalman
+end
+
+Tracker --> Pipeline: activeTracks[]
+deactivate Tracker
+
+Pipeline --> User: PerceptionOutput
+
+@enduml
+

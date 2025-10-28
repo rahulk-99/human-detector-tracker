@@ -1,0 +1,119 @@
+@startuml
+
+' Human Perception System - Revised Class Diagram Phase 1
+
+package Detection {
+  interface IDetector {
+    + detect()
+    + setConfidenceThreshold()
+  }
+  
+  class YOLODetector {
+    - net_: cv::dnn::Net
+    - classNames_: vector<string>
+    - colors_: vector<cv::Scalar>
+    - realMode_: bool
+    + detect()
+    + preprocessImage()
+    + postprocessOutput()
+    + applyNMS()
+  }
+  
+  class Detection {
+    + getBoundingBox()
+    + getConfidence()
+    + getClassId()
+  }
+  
+  class BoundingBox {
+    + computeIoU()
+    + getArea()
+  }
+}
+
+package Tracking {
+  interface ITracker {
+    + update()
+    + getActiveTracks()
+  }
+  
+  class KalmanTracker {
+    - kalmanFilters_: map<int, KalmanFilter>
+    + update()
+    + associateDetectionsToTracks()
+    - predictTracks()
+    - createNewTrack()
+  }
+  
+  class Track {
+    - trackId_: int
+    - state_: TrackState
+    - position_: Position3D
+    - velocity_: Position3D
+    + update()
+    + predict()
+  }
+  
+  class KalmanFilter {
+    - state_: vector<float>
+    - covariance_: vector<float>
+    - F_: matrix
+    - H_: matrix
+    - Q_: matrix
+    - R_: matrix
+    - K_: matrix
+    + initialize()
+    + predict()
+    + update()
+    - matrixMultiply()
+    - matrixTranspose()
+    - matrixInverse()
+  }
+}
+
+package Core {
+  class PerceptionPipeline {
+    - detector_
+    - tracker_
+    - transformer_
+    + processFrame()
+    + processVideo()
+  }
+  
+  class CameraModel {
+    - fx, fy, cx, cy
+    - cameraPosition_
+    + getFocalLength()
+  }
+  
+  class CoordinateTransformer {
+    + imageToRobotFrame()
+    + pixelToCameraFrame()
+  }
+}
+
+YOLODetector ..|> IDetector
+Detection *-- BoundingBox
+KalmanTracker ..|> ITracker
+KalmanTracker o-- KalmanFilter
+Track *-- KalmanFilter
+PerceptionPipeline o-- IDetector
+PerceptionPipeline o-- ITracker
+KalmanFilter ..> Position3D
+
+note right of YOLODetector
+  Phase 1: Real OpenCV DNN
+  - Model loading
+  - Inference
+  - NMS
+end note
+
+note right of KalmanFilter
+  Phase 1: Full implementation
+  - Matrix operations
+  - Covariance tracking
+  - State prediction
+end note
+
+@enduml
+
