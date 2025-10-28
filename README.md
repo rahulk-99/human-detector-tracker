@@ -47,7 +47,11 @@ My name is Rahul Kumar. I am a Robotics Master's student at the University of Ma
 
 **Phase 1 Sprint Planning:**
 
-- Here's the link to Sprint Planning Notes & Review - [Google Docs](https://drive.google.com/drive/folders/1-nCwMyBTdMd0FeAymqdSMDeUdiPkOb5H?usp=sharing)
+- Here's the link to Sprint Planning Notes & Review - [Google Docs](https://docs.google.com/document/d/1IPIIQfQ-b3CGt2YbmqxJesh1Z4LAwaoxIcWlEhEjiBU/edit?usp=sharing)
+
+**Phase 1 API Video:**
+
+-[Phase 1 API Video](https://drive.google.com/file/d/1t2W6wct0taBPDg3CrEwSaJRvRWU8mBnN/view?usp=sharing)
 
 **Phase 0 Proposal & Design:**
 - [Proposal Document, QuadChart & Video](https://drive.google.com/drive/folders/15M2WV5y34R-rcf8K7gPXKGJ_NX8htvk3?usp=sharing) - Design methodology and video explanation
