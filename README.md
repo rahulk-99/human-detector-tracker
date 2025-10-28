@@ -275,7 +275,7 @@ The project aims for **90%+ code coverage**. Current test suites:
 
 Shows complete class hierarchy, interfaces, and relationships.
 
-![Class Diagram](./UML/revised/class_diagram_revised.pdf)
+![Class Diagram](./UML/revised/class_diagram_revised.png)
 
 See: [`UML/revised/class_diagram_revised.pdf`](./UML/revised/class_diagram_revised.pdf)
 
