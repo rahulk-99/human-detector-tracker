@@ -1,0 +1,9 @@
+[  6%] Built target gtest
+[ 13%] Built target gmock
+[ 20%] Built target gmock_main
+[ 26%] Built target gtest_main
+[ 33%] Built target myLib1
+[ 40%] Built target myLib2
+[ 80%] Built target perception
+[ 86%] Built target shell-app
+[100%] Built target cpp-test
