@@ -1,0 +1,78 @@
+Test project /home/madhav2133/Fall25/ENPM700/Midterm/human-detector-tracker/build
+      Start  1: dummy_test.this_should_pass
+ 1/35 Test  #1: dummy_test.this_should_pass ...................   Passed    0.01 sec
+      Start  2: dummy_test.this_should_pass_too
+ 2/35 Test  #2: dummy_test.this_should_pass_too ...............   Passed    0.01 sec
+      Start  3: dummy_test.this_will_fail
+ 3/35 Test  #3: dummy_test.this_will_fail .....................***Failed    0.01 sec
+      Start  4: BoundingBoxTest.DefaultConstructor
+ 4/35 Test  #4: BoundingBoxTest.DefaultConstructor ............   Passed    0.01 sec
+      Start  5: BoundingBoxTest.ParameterizedConstructor
+ 5/35 Test  #5: BoundingBoxTest.ParameterizedConstructor ......   Passed    0.01 sec
+      Start  6: BoundingBoxTest.EdgeCalculations
+ 6/35 Test  #6: BoundingBoxTest.EdgeCalculations ..............   Passed    0.01 sec
+      Start  7: BoundingBoxTest.AreaCalculation
+ 7/35 Test  #7: BoundingBoxTest.AreaCalculation ...............   Passed    0.01 sec
+      Start  8: BoundingBoxTest.IoUCalculation
+ 8/35 Test  #8: BoundingBoxTest.IoUCalculation ................   Passed    0.01 sec
+      Start  9: DetectionTest.DefaultConstructor
+ 9/35 Test  #9: DetectionTest.DefaultConstructor ..............   Passed    0.01 sec
+      Start 10: DetectionTest.ParameterizedConstructor
+10/35 Test #10: DetectionTest.ParameterizedConstructor ........   Passed    0.01 sec
+      Start 11: DetectionTest.ValidityCheck
+11/35 Test #11: DetectionTest.ValidityCheck ...................   Passed    0.01 sec
+      Start 12: YOLODetectorTest.Initialization
+12/35 Test #12: YOLODetectorTest.Initialization ...............   Passed    0.01 sec
+      Start 13: YOLODetectorTest.MockDetection
+13/35 Test #13: YOLODetectorTest.MockDetection ................   Passed    0.01 sec
+      Start 14: YOLODetectorTest.ThresholdSetting
+14/35 Test #14: YOLODetectorTest.ThresholdSetting .............   Passed    0.01 sec
+      Start 15: Position3DTest.DefaultConstructor
+15/35 Test #15: Position3DTest.DefaultConstructor .............   Passed    0.01 sec
+      Start 16: Position3DTest.ParameterizedConstructor
+16/35 Test #16: Position3DTest.ParameterizedConstructor .......   Passed    0.01 sec
+      Start 17: Position3DTest.VectorOperations
+17/35 Test #17: Position3DTest.VectorOperations ...............   Passed    0.01 sec
+      Start 18: Position3DTest.ScalarOperations
+18/35 Test #18: Position3DTest.ScalarOperations ...............   Passed    0.01 sec
+      Start 19: Position3DTest.MagnitudeAndDistance
+19/35 Test #19: Position3DTest.MagnitudeAndDistance ...........   Passed    0.01 sec
+      Start 20: TrackTest.Initialization
+20/35 Test #20: TrackTest.Initialization ......................   Passed    0.01 sec
+      Start 21: TrackTest.Update
+21/35 Test #21: TrackTest.Update ..............................   Passed    0.01 sec
+      Start 22: TrackTest.StateTransition
+22/35 Test #22: TrackTest.StateTransition .....................   Passed    0.01 sec
+      Start 23: KalmanFilterTest.Initialization
+23/35 Test #23: KalmanFilterTest.Initialization ...............   Passed    0.01 sec
+      Start 24: KalmanFilterTest.PredictUpdate
+24/35 Test #24: KalmanFilterTest.PredictUpdate ................   Passed    0.01 sec
+      Start 25: KalmanTrackerTest.Initialization
+25/35 Test #25: KalmanTrackerTest.Initialization ..............   Passed    0.01 sec
+      Start 26: KalmanTrackerTest.TrackCreationAndUpdate
+26/35 Test #26: KalmanTrackerTest.TrackCreationAndUpdate ......   Passed    0.01 sec
+      Start 27: CameraModelTest.DefaultConstructor
+27/35 Test #27: CameraModelTest.DefaultConstructor ............   Passed    0.01 sec
+      Start 28: CameraModelTest.ParameterizedConstructor
+28/35 Test #28: CameraModelTest.ParameterizedConstructor ......   Passed    0.01 sec
+      Start 29: CoordinateTransformerTest.Initialization
+29/35 Test #29: CoordinateTransformerTest.Initialization ......   Passed    0.01 sec
+      Start 30: CoordinateTransformerTest.ImageToRobotFrame
+30/35 Test #30: CoordinateTransformerTest.ImageToRobotFrame ...   Passed    0.01 sec
+      Start 31: PerceptionPipelineTest.Initialization
+31/35 Test #31: PerceptionPipelineTest.Initialization .........   Passed    0.01 sec
+      Start 32: PerceptionPipelineTest.FrameProcessing
+32/35 Test #32: PerceptionPipelineTest.FrameProcessing ........   Passed    0.01 sec
+      Start 33: GeometryUtilsTest.DepthEstimation
+33/35 Test #33: GeometryUtilsTest.DepthEstimation .............   Passed    0.01 sec
+      Start 34: GeometryUtilsTest.IntersectionArea
+34/35 Test #34: GeometryUtilsTest.IntersectionArea ............   Passed    0.01 sec
+      Start 35: GeometryUtilsTest.Clamp
+35/35 Test #35: GeometryUtilsTest.Clamp .......................   Passed    0.01 sec
+
+97% tests passed, 1 tests failed out of 35
+
+Total Test time (real) =   0.24 sec
+
+The following tests FAILED:
+	  3 - dummy_test.this_will_fail (Failed)
