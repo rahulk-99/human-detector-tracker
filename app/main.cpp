@@ -69,7 +69,11 @@ int main(int argc, char* argv[]) {
                 << "  shell-app [camera_id] [model_path] [max_frames]\n" << std::endl;
       return 0;
     }
-    if (arg1 == "--video") {
+    // Handle --video (single argument) or -- video (two arguments)
+    if (arg1 == "--video" || (arg1 == "--" && argc > argi + 1 && std::string(argv[argi + 1]) == "video")) {
+      if (arg1 == "--") {
+        argi++;  // Skip the "--"
+      }
       if (argc <= argi + 1) {
         std::cerr << "Error: --video requires a path" << std::endl;
         return 1;
@@ -77,6 +81,11 @@ int main(int argc, char* argv[]) {
       useVideo = true;
       videoPath = argv[argi + 1];
       argi += 2;
+    } else if (arg1 == "--") {
+      // If just "--" is provided without "video", give helpful error
+      std::cerr << "Error: Invalid argument '--'. Did you mean '--video'?" << std::endl;
+      std::cerr << "Usage: shell-app --video <path> [model_path]" << std::endl;
+      return 1;
     } else {
       try {
         cameraId = std::stoi(arg1);

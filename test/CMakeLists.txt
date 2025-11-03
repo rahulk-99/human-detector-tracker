@@ -2,7 +2,6 @@
 add_executable(cpp-test
   # list of source cpp files:
   main.cpp
-  test.cpp
   perception_test.cpp
   video_processing_test.cpp
   )
