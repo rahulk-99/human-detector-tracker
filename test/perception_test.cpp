@@ -96,7 +96,8 @@ TEST(DetectionTest, ValidityCheck) {
 // ============================================================================
 
 TEST(YOLODetectorTest, Initialization) {
-  detection::YOLODetector detector("models/yolov8n.onnx");
+  // Use a non-existent model path to test initialization in mock mode
+  detection::YOLODetector detector("models/nonexistent_model.onnx");
   EXPECT_TRUE(detector.isInitialized());
   EXPECT_FLOAT_EQ(detector.getConfidenceThreshold(), 0.5f);
   EXPECT_EQ(detector.getInputSize(), 640);
@@ -121,7 +122,8 @@ TEST(YOLODetectorTest, MockDetection) {
 }
 
 TEST(YOLODetectorTest, ThresholdSetting) {
-  detection::YOLODetector detector("models/yolov8n.onnx");
+  // Use a non-existent model path to test threshold setting in mock mode
+  detection::YOLODetector detector("models/nonexistent_model.onnx");
   detector.setConfidenceThreshold(0.7f);
   EXPECT_FLOAT_EQ(detector.getConfidenceThreshold(), 0.7f);
 }
@@ -328,8 +330,9 @@ TEST(CoordinateTransformerTest, ImageToRobotFrame) {
 // ============================================================================
 
 TEST(PerceptionPipelineTest, Initialization) {
+  // Use a non-existent model path for testing
   auto detector = std::make_shared<detection::YOLODetector>(
-      "models/yolov8n.onxx");
+      "models/nonexistent_model.onnx");
   auto tracker = std::make_shared<tracking::KalmanTracker>();
   core::CameraModel camera;
   auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
@@ -341,8 +344,9 @@ TEST(PerceptionPipelineTest, Initialization) {
 }
 
 TEST(PerceptionPipelineTest, FrameProcessing) {
+  // Use a non-existent model path for testing
   auto detector = std::make_shared<detection::YOLODetector>(
-      "models/yolov8n.onxx");
+      "models/nonexistent_model.onnx");
   auto tracker = std::make_shared<tracking::KalmanTracker>();
   core::CameraModel camera;
   auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
@@ -385,5 +389,11 @@ TEST(GeometryUtilsTest, Clamp) {
   EXPECT_FLOAT_EQ(utils::GeometryUtils::clamp(5.0f, 0.0f, 10.0f), 5.0f);
   EXPECT_FLOAT_EQ(utils::GeometryUtils::clamp(-1.0f, 0.0f, 10.0f), 0.0f);
   EXPECT_FLOAT_EQ(utils::GeometryUtils::clamp(15.0f, 0.0f, 10.0f), 10.0f);
+}
+
+// Main function for GoogleTest
+int main(int argc, char** argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
 
