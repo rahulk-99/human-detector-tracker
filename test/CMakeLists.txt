@@ -1,7 +1,9 @@
 # Any C++ source files needed to build this target (cpp-test).
 add_executable(cpp-test
   # list of source cpp files:
+  main.cpp
   perception_test.cpp
+  video_processing_test.cpp
   )
 
 # Any include directories needed to build this target.
