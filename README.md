@@ -130,15 +130,17 @@ The system is organized into four main modules:
 - **OpenCV 4.8+** (required for YOLO inference with 3D tensor outputs - conditionally compiled with HAVE_OPENCV)
   - **Important**: OpenCV 4.8+ is required because modern YOLOv5/YOLOv8 models use 3D tensor outputs `[1, 84, 8400]` which are not supported in older versions
   - OpenCV 4.5.4 and earlier will fail with `shape_utils.hpp` errors when processing these models
+  - **Tested with**: OpenCV 4.10.0 (recommended)
 - **ONNX models** (YOLOv5/YOLOv8 ONNX format recommended)
 
 ### Third-Party Libraries Justification
 
-1. **OpenCV 4.8+**: Industry-standard computer vision library
+1. **OpenCV 4.8+** (tested with 4.10.0): Industry-standard computer vision library
    - Camera interface and image I/O
    - DNN module for YOLO inference with 3D tensor support
    - Camera calibration and coordinate transformations
    - **Version requirement**: OpenCV 4.8+ is mandatory for modern YOLO models (YOLOv5/YOLOv8) that use 3D tensor outputs
+   - **Installation**: Can be installed system-wide via package manager or built from source
    
 2. **YOLOv8**: State-of-the-art object detector (AGPL-3.0 license)
    - Pre-trained models available (no training required)
@@ -154,9 +156,10 @@ The system is organized into four main modules:
 git clone https://github.com/rahulk-99/human-detector-tracker.git
 cd human-detector-tracker
 
-# Verify OpenCV version (must be 4.8+)
+# Verify OpenCV version (must be 4.8+, tested with 4.10.0)
 pkg-config --modversion opencv4
 # If < 4.8, see Troubleshooting section for upgrade instructions
+# For system-wide installation, ensure OpenCV is in /usr/local or /usr
 
 # Configure the project
 cmake -S ./ -B build/
@@ -567,19 +570,20 @@ Fixes #issue_number
 pkg-config --modversion opencv4
 
 # If version is < 4.8, you need to upgrade:
-# Option 1: Build from source (recommended)
-# See: https://docs.opencv.org/master/d7/d9f/tutorial_linux_install.html
-# Or use the quick method:
-git clone --depth 1 --branch 4.10.0 https://github.com/opencv/opencv.git
-cd opencv && mkdir build && cd build
+# Option 1: Build from source and install system-wide (recommended)
+# Download OpenCV 4.10.0 source (or latest 4.8+):
+# wget https://github.com/opencv/opencv/archive/refs/tags/4.10.0.zip
+# unzip opencv-4.10.0.zip
+cd opencv-4.10.0 && mkdir build && cd build
+cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local ..
+make -j$(nproc) && sudo make install
+sudo ldconfig  # Update system library cache
+
+# Option 2: Install to custom location
 cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=$HOME/opencv_install ..
 make -j$(nproc) && make install
-
-# Then configure CMake with the new OpenCV:
+# Then configure CMake with the custom OpenCV:
 cmake -D OpenCV_DIR=$HOME/opencv_install/lib/cmake/opencv4 -S . -B build/
-
-# Option 2: If system OpenCV is 4.8+, just specify path:
-cmake -D OpenCV_DIR=/path/to/opencv/build -S ./ -B build/
 ```
 
 **Problem**: OpenCV version is 4.5.4 or earlier, but model fails with `shape_utils.hpp` error

@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 # Find required dependencies
-find_package(OpenCV QUIET)
+find_package(OpenCV REQUIRED)
 if(NOT OpenCV_FOUND)
   message(WARNING "OpenCV not found - using stub implementation for Phase 0")
 endif()

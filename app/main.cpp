@@ -44,11 +44,72 @@ void printOutput(const core::PerceptionOutput& output) {
   std::cout << "========================================\n" << std::endl;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
   std::cout << "================================================" << std::endl;
   std::cout << "   Acme Robotics - Human Perception System     " << std::endl;
-  std::cout << "   Phase 0: Design and Architecture Demo       " << std::endl;
+  std::cout << "   Phase 1: Detection & Tracking Demo          " << std::endl;
   std::cout << "================================================\n" << std::endl;
+
+  // Parse command line arguments (video or webcam)
+  bool useVideo = false;
+  std::string videoPath;
+  int cameraId = 0;
+  std::string modelPath = "models/yolov8n.onnx";
+  // Fixed thresholds (kept within the script)
+  const float confidenceThreshold = 0.5f;
+  const float nmsThreshold = 0.4f;
+  int maxFrames = 0;  // webcam mode only
+
+  int argi = 1;
+  if (argc > argi) {
+    std::string arg1 = argv[argi];
+    if (arg1 == "--help" || arg1 == "-h") {
+      std::cout << "Usage:\n"
+                << "  shell-app --video <path> [model_path]\n"
+                << "  shell-app [camera_id] [model_path] [max_frames]\n" << std::endl;
+      return 0;
+    }
+    if (arg1 == "--video") {
+      if (argc <= argi + 1) {
+        std::cerr << "Error: --video requires a path" << std::endl;
+        return 1;
+      }
+      useVideo = true;
+      videoPath = argv[argi + 1];
+      argi += 2;
+    } else {
+      try {
+        cameraId = std::stoi(arg1);
+        argi += 1;
+      } catch (...) {
+        useVideo = true;
+        videoPath = arg1;
+        argi += 1;
+      }
+    }
+  }
+  if (argc > argi) {
+    modelPath = argv[argi++];
+  }
+  // confidenceThreshold and nmsThreshold are fixed in code
+  if (!useVideo && argc > argi) {
+    try { maxFrames = std::stoi(argv[argi++]); }
+    catch (...) { std::cerr << "Invalid max_frames" << std::endl; return 1; }
+  }
+
+  std::cout << "Configuration:" << std::endl;
+  if (useVideo) {
+    std::cout << "  Mode: Video\n  Video: " << videoPath << std::endl;
+  } else {
+    std::cout << "  Mode: Webcam\n  Camera ID: " << cameraId << std::endl;
+  }
+  std::cout << "  Model: " << modelPath << std::endl;
+  std::cout << "  Confidence: " << confidenceThreshold << std::endl;
+  std::cout << "  NMS: " << nmsThreshold << std::endl;
+  if (!useVideo) {
+    std::cout << "  Max Frames: " << (maxFrames > 0 ? std::to_string(maxFrames) : std::string("Unlimited")) << std::endl;
+  }
+  std::cout << std::endl;
 
   // Initialize camera model
   std::cout << "1. Initializing camera model..." << std::endl;
@@ -65,7 +126,7 @@ int main() {
   // Initialize detector
   std::cout << "\n2. Initializing YOLO detector..." << std::endl;
   auto detector = std::make_shared<detection::YOLODetector>(
-      "models/yolov8n.onnx", 0.5f, 0.4f, 640);
+      modelPath, confidenceThreshold, nmsThreshold, 640);
 
   // Initialize tracker
   std::cout << "\n3. Initializing Kalman tracker..." << std::endl;
@@ -80,28 +141,36 @@ int main() {
   std::cout << "\n5. Creating perception pipeline..." << std::endl;
   core::PerceptionPipeline pipeline(detector, tracker, transformer, camera);
 
-  // Simulate processing multiple frames
-  std::cout << "\n6. Processing frames...\n" << std::endl;
-  
-  int width = 640, height = 480;
-  std::vector<unsigned char> frame(width * height * 3, 128);
-
-  // Process 5 frames
-  for (int i = 0; i < 5; ++i) {
-    double timestamp = i * 0.033;  // ~30 FPS
-    
-    core::PerceptionOutput output = pipeline.processFrame(
-        frame.data(), width, height, 3, timestamp);
-    
-    if (output.success) {
-      printOutput(output);
-    }
+  // Run pipeline on video or webcam
+  std::cout << "\n6. Starting " << (useVideo ? "video" : "webcam") << " stream...\n" << std::endl;
+  std::vector<core::PerceptionOutput> results;
+  if (useVideo) {
+    results = pipeline.processVideo(videoPath);
+  } else {
+    results = pipeline.processCamera(cameraId, maxFrames);
   }
+
+  // Print summary
+  std::cout << "\n================================================" << std::endl;
+  std::cout << "  Processing Complete!" << std::endl;
+  std::cout << "  Total frames processed: " << results.size() << std::endl;
+  if (!results.empty()) {
+    int totalDetections = 0;
+    int totalTracks = 0;
+    for (const auto& r : results) {
+      totalDetections += static_cast<int>(r.detections.size());
+      totalTracks += static_cast<int>(r.tracks.size());
+    }
+    double avgDet = static_cast<double>(totalDetections) / results.size();
+    double avgTrk = static_cast<double>(totalTracks) / results.size();
+    std::cout << "  Average detections per frame: " << avgDet << std::endl;
+    std::cout << "  Average tracks per frame: " << avgTrk << std::endl;
+  }
+  std::cout << "================================================\n" << std::endl;
 
   std::cout << "\n================================================" << std::endl;
   std::cout << "  Demo Complete!" << std::endl;
-  std::cout << "  Phase 0: Architecture design verified" << std::endl;
-  std::cout << "  Next: Implement full YOLO and Kalman algorithms" << std::endl;
+  std::cout << "  Phase 1: Detection & Tracking verified" << std::endl;
   std::cout << "================================================\n" << std::endl;
 
   return 0;
