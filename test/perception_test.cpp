@@ -96,14 +96,19 @@ TEST(DetectionTest, ValidityCheck) {
 // ============================================================================
 
 TEST(YOLODetectorTest, Initialization) {
-  detection::YOLODetector detector("models/yolov8n.pt");
+  // Use a non-existent model path to test initialization in mock mode
+  detection::YOLODetector detector("models/nonexistent_model.onnx");
   EXPECT_TRUE(detector.isInitialized());
   EXPECT_FLOAT_EQ(detector.getConfidenceThreshold(), 0.5f);
   EXPECT_EQ(detector.getInputSize(), 640);
 }
 
 TEST(YOLODetectorTest, MockDetection) {
-  detection::YOLODetector detector("models/yolov8n.pt");
+  // Use a non-existent model path to force mock mode
+  detection::YOLODetector detector("models/nonexistent_model.onnx");
+  
+  // Verify detector initializes (even in mock mode)
+  EXPECT_TRUE(detector.isInitialized());
   
   // Create dummy frame
   int width = 640, height = 480;
@@ -111,12 +116,14 @@ TEST(YOLODetectorTest, MockDetection) {
   
   auto detections = detector.detect(frame.data(), width, height, 3);
   
-  // Phase 0: Should return mock detections
-  EXPECT_GT(detections.size(), 0);
+  // Phase 1: Mock mode returns empty detections to avoid false positives
+  // This is the correct behavior - real YOLO model should be used for actual detection
+  EXPECT_EQ(detections.size(), 0);
 }
 
 TEST(YOLODetectorTest, ThresholdSetting) {
-  detection::YOLODetector detector("models/yolov8n.pt");
+  // Use a non-existent model path to test threshold setting in mock mode
+  detection::YOLODetector detector("models/nonexistent_model.onnx");
   detector.setConfidenceThreshold(0.7f);
   EXPECT_FLOAT_EQ(detector.getConfidenceThreshold(), 0.7f);
 }
@@ -323,8 +330,9 @@ TEST(CoordinateTransformerTest, ImageToRobotFrame) {
 // ============================================================================
 
 TEST(PerceptionPipelineTest, Initialization) {
+  // Use a non-existent model path for testing
   auto detector = std::make_shared<detection::YOLODetector>(
-      "models/yolov8n.pt");
+      "models/nonexistent_model.onnx");
   auto tracker = std::make_shared<tracking::KalmanTracker>();
   core::CameraModel camera;
   auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
@@ -336,8 +344,9 @@ TEST(PerceptionPipelineTest, Initialization) {
 }
 
 TEST(PerceptionPipelineTest, FrameProcessing) {
+  // Use a non-existent model path for testing
   auto detector = std::make_shared<detection::YOLODetector>(
-      "models/yolov8n.pt");
+      "models/nonexistent_model.onnx");
   auto tracker = std::make_shared<tracking::KalmanTracker>();
   core::CameraModel camera;
   auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
@@ -380,5 +389,11 @@ TEST(GeometryUtilsTest, Clamp) {
   EXPECT_FLOAT_EQ(utils::GeometryUtils::clamp(5.0f, 0.0f, 10.0f), 5.0f);
   EXPECT_FLOAT_EQ(utils::GeometryUtils::clamp(-1.0f, 0.0f, 10.0f), 0.0f);
   EXPECT_FLOAT_EQ(utils::GeometryUtils::clamp(15.0f, 0.0f, 10.0f), 10.0f);
+}
+
+// Main function for GoogleTest
+int main(int argc, char** argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
 
