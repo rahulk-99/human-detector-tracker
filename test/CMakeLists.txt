@@ -4,6 +4,7 @@ add_executable(cpp-test
   main.cpp
   test.cpp
   perception_test.cpp
+  video_processing_test.cpp
   )
 
 # Any include directories needed to build this target.
