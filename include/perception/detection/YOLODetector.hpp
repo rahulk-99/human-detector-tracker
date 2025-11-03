@@ -15,6 +15,12 @@
 #include "IDetector.hpp"
 #include "Detection.hpp"
 
+#ifdef HAVE_OPENCV
+namespace cv {
+  class Mat;
+}
+#endif
+
 namespace perception {
 namespace detection {
 
@@ -141,6 +147,23 @@ class YOLODetector : public IDetector {
    */
   std::vector<Detection> postprocessOutput(int originalWidth,
                                           int originalHeight);
+  
+#ifdef HAVE_OPENCV
+  /**
+   * @brief Post-process YOLO output to extract detections (with outputs parameter)
+   * 
+   * Applies NMS and filters for human class (class ID 0).
+   * Internal method that takes outputs directly to avoid double forward call.
+   * 
+   * @param outputs Network output tensors from forward pass
+   * @param originalWidth Original image width (for scaling boxes)
+   * @param originalHeight Original image height (for scaling boxes)
+   * @return std::vector<Detection> Processed detections
+   */
+  std::vector<Detection> postprocessOutput(const std::vector<cv::Mat>& outputs,
+                                          int originalWidth,
+                                          int originalHeight);
+#endif
 
   /**
    * @brief Apply Non-Maximum Suppression to remove duplicate detections
