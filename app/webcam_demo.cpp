@@ -24,67 +24,77 @@ int main(int argc, char* argv[]) {
   std::cout << "================================================\n" << std::endl;
 
   // Parse command line arguments
+  bool useVideo = false;
+  std::string videoPath;
   int cameraId = 0;
-  std::string modelPath = "models/yolov5n.onnx";  // Default to YOLOv5 ONNX format (better OpenCV 4.5.4 compatibility)
-  float confidenceThreshold = 0.5f;
-  float nmsThreshold = 0.4f;
+  std::string modelPath = "models/yolov5n.onnx";  // Default model
+  // Fixed thresholds (kept within the script)
+  const float confidenceThreshold = 0.5f;
+  const float nmsThreshold = 0.4f;
   int maxFrames = 0;  // 0 = unlimited
 
-  if (argc > 1) {
-    std::string arg1 = argv[1];
+  int argi = 1;
+  if (argc > argi) {
+    std::string arg1 = argv[argi];
     if (arg1 == "--help" || arg1 == "-h") {
-      std::cout << "Usage: webcam-demo [camera_id] [model_path] [confidence] [nms] [max_frames]\n" << std::endl;
+      std::cout << "Usage:\n"
+                << "  webcam-demo [camera_id] [model_path] [max_frames]\n"
+                << "  webcam-demo --video <path> [model_path]\n" << std::endl;
       std::cout << "Arguments:" << std::endl;
       std::cout << "  camera_id      : Camera device ID (default: 0)" << std::endl;
+      std::cout << "  --video <path> : Run on a video file instead of webcam" << std::endl;
       std::cout << "  model_path     : Path to YOLO model (default: models/yolov5n.onnx)" << std::endl;
-      std::cout << "  confidence     : Confidence threshold 0.0-1.0 (default: 0.5)" << std::endl;
-      std::cout << "  nms            : NMS threshold 0.0-1.0 (default: 0.4)" << std::endl;
-      std::cout << "  max_frames     : Maximum frames to process, 0=unlimited (default: 0)" << std::endl;
+      // thresholds are fixed in code
+      std::cout << "  max_frames     : For webcam mode only; 0=unlimited (default: 0)" << std::endl;
       std::cout << "\nControls:" << std::endl;
       std::cout << "  Press 'q' or ESC to quit" << std::endl;
       return 0;
     }
-    try {
-      cameraId = std::stoi(arg1);
-    } catch (...) {
-      std::cerr << "Error: Invalid camera ID: " << arg1 << std::endl;
-      return 1;
+    if (arg1 == "--video") {
+      if (argc <= argi + 1) {
+        std::cerr << "Error: --video requires a path" << std::endl;
+        return 1;
+      }
+      useVideo = true;
+      videoPath = argv[argi + 1];
+      argi += 2;
+    } else {
+      try {
+        cameraId = std::stoi(arg1);
+        argi += 1;
+      } catch (...) {
+        // If not an int, treat as video path
+        useVideo = true;
+        videoPath = arg1;
+        argi += 1;
+      }
     }
   }
-  if (argc > 2) {
-    modelPath = argv[2];
+  if (argc > argi) {
+    modelPath = argv[argi++];
   }
-  if (argc > 3) {
+  // Confidence and NMS thresholds are fixed in code
+  if (!useVideo && argc > argi) {
     try {
-      confidenceThreshold = std::stof(argv[3]);
+      maxFrames = std::stoi(argv[argi++]);
     } catch (...) {
-      std::cerr << "Error: Invalid confidence threshold: " << argv[3] << std::endl;
-      return 1;
-    }
-  }
-  if (argc > 4) {
-    try {
-      nmsThreshold = std::stof(argv[4]);
-    } catch (...) {
-      std::cerr << "Error: Invalid NMS threshold: " << argv[4] << std::endl;
-      return 1;
-    }
-  }
-  if (argc > 5) {
-    try {
-      maxFrames = std::stoi(argv[5]);
-    } catch (...) {
-      std::cerr << "Error: Invalid max frames: " << argv[5] << std::endl;
+      std::cerr << "Error: Invalid max frames: " << argv[argi-1] << std::endl;
       return 1;
     }
   }
 
   std::cout << "Configuration:" << std::endl;
-  std::cout << "  Camera ID: " << cameraId << std::endl;
+  if (useVideo) {
+    std::cout << "  Mode: Video" << std::endl;
+    std::cout << "  Video: " << videoPath << std::endl;
+  } else {
+    std::cout << "  Mode: Webcam" << std::endl;
+    std::cout << "  Camera ID: " << cameraId << std::endl;
+  }
   std::cout << "  Model: " << modelPath << std::endl;
   std::cout << "  Confidence Threshold: " << confidenceThreshold << std::endl;
   std::cout << "  NMS Threshold: " << nmsThreshold << std::endl;
-  if (maxFrames > 0) {
+  if (!useVideo && maxFrames > 0) {
     std::cout << "  Max Frames: " << maxFrames << std::endl;
   } else {
     std::cout << "  Max Frames: Unlimited" << std::endl;
@@ -132,11 +142,16 @@ int main(int argc, char* argv[]) {
     core::PerceptionPipeline pipeline(detector, tracker, transformer, camera);
     std::cout << "   ✓ Pipeline created" << std::endl;
 
-    // Process camera stream
-    std::cout << "\n6. Starting webcam stream..." << std::endl;
+    // Process stream
+    std::cout << "\n6. Starting " << (useVideo ? "video" : "webcam") << " stream..." << std::endl;
     std::cout << "================================================\n" << std::endl;
 
-    auto results = pipeline.processCamera(cameraId, maxFrames);
+    std::vector<core::PerceptionOutput> results;
+    if (useVideo) {
+      results = pipeline.processVideo(videoPath);
+    } else {
+      results = pipeline.processCamera(cameraId, maxFrames);
+    }
 
     // Print summary
     std::cout << "\n================================================" << std::endl;

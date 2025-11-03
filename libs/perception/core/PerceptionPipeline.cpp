@@ -100,10 +100,70 @@ std::vector<PerceptionOutput> PerceptionPipeline::processVideo(
   
   std::cout << "[PerceptionPipeline] Processing video: " << videoPath
             << std::endl;
-  std::cout << "[PerceptionPipeline] Phase 0 - Stub implementation"
-            << std::endl;
 
-  // Phase 0: Return empty results
+#ifdef HAVE_OPENCV
+  try {
+    // Open video file
+    cv::VideoCapture cap(videoPath);
+    if (!cap.isOpened()) {
+      std::cerr << "[PerceptionPipeline] Error: Could not open video '" << videoPath << "'" << std::endl;
+      return results;
+    }
+
+    int width = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH));
+    int height = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
+    double fps = cap.get(cv::CAP_PROP_FPS);
+    if (fps <= 0) fps = 30.0;
+
+    std::cout << "[PerceptionPipeline] Video opened: " << width << "x" << height
+              << " @ " << fps << " FPS" << std::endl;
+
+    // Enable visualization for video playback
+    bool originalVizState = visualizationEnabled_;
+    visualizationEnabled_ = true;
+
+    cv::Mat frame;
+    int frameNumber = 0;
+
+    while (true) {
+      if (!cap.read(frame)) {
+        break;  // End of video
+      }
+
+      double timestamp = frameNumber / std::max(1.0, fps);
+
+      std::vector<unsigned char> frameData(frame.data, frame.data + frame.total() * frame.channels());
+      PerceptionOutput output = processFrame(
+          frameData.data(), frame.cols, frame.rows, frame.channels(), timestamp);
+      results.push_back(output);
+
+      // Allow user to quit early
+      char key = cv::waitKey(1) & 0xFF;
+      if (key == 'q' || key == 'Q' || key == 27) {
+        std::cout << "[PerceptionPipeline] User requested exit" << std::endl;
+        break;
+      }
+
+      frameNumber++;
+    }
+
+    // Restore visualization state
+    visualizationEnabled_ = originalVizState;
+    cap.release();
+    cv::destroyAllWindows();
+
+    std::cout << "[PerceptionPipeline] Video processing complete. Processed "
+              << results.size() << " frames" << std::endl;
+
+  } catch (const cv::Exception& e) {
+    std::cerr << "[PerceptionPipeline] OpenCV error: " << e.what() << std::endl;
+  } catch (const std::exception& e) {
+    std::cerr << "[PerceptionPipeline] Error processing video: " << e.what() << std::endl;
+  }
+#else
+  std::cerr << "[PerceptionPipeline] OpenCV not available - cannot process video" << std::endl;
+#endif
+
   return results;
 }
 
