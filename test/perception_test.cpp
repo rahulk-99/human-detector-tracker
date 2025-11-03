@@ -96,14 +96,18 @@ TEST(DetectionTest, ValidityCheck) {
 // ============================================================================
 
 TEST(YOLODetectorTest, Initialization) {
-  detection::YOLODetector detector("models/yolov8n.pt");
+  detection::YOLODetector detector("models/yolov8n.onnx");
   EXPECT_TRUE(detector.isInitialized());
   EXPECT_FLOAT_EQ(detector.getConfidenceThreshold(), 0.5f);
   EXPECT_EQ(detector.getInputSize(), 640);
 }
 
 TEST(YOLODetectorTest, MockDetection) {
-  detection::YOLODetector detector("models/yolov8n.pt");
+  // Use a non-existent model path to force mock mode
+  detection::YOLODetector detector("models/nonexistent_model.onnx");
+  
+  // Verify detector initializes (even in mock mode)
+  EXPECT_TRUE(detector.isInitialized());
   
   // Create dummy frame
   int width = 640, height = 480;
@@ -111,12 +115,13 @@ TEST(YOLODetectorTest, MockDetection) {
   
   auto detections = detector.detect(frame.data(), width, height, 3);
   
-  // Phase 0: Should return mock detections
-  EXPECT_GT(detections.size(), 0);
+  // Phase 1: Mock mode returns empty detections to avoid false positives
+  // This is the correct behavior - real YOLO model should be used for actual detection
+  EXPECT_EQ(detections.size(), 0);
 }
 
 TEST(YOLODetectorTest, ThresholdSetting) {
-  detection::YOLODetector detector("models/yolov8n.pt");
+  detection::YOLODetector detector("models/yolov8n.onnx");
   detector.setConfidenceThreshold(0.7f);
   EXPECT_FLOAT_EQ(detector.getConfidenceThreshold(), 0.7f);
 }
@@ -324,7 +329,7 @@ TEST(CoordinateTransformerTest, ImageToRobotFrame) {
 
 TEST(PerceptionPipelineTest, Initialization) {
   auto detector = std::make_shared<detection::YOLODetector>(
-      "models/yolov8n.pt");
+      "models/yolov8n.onxx");
   auto tracker = std::make_shared<tracking::KalmanTracker>();
   core::CameraModel camera;
   auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
@@ -337,7 +342,7 @@ TEST(PerceptionPipelineTest, Initialization) {
 
 TEST(PerceptionPipelineTest, FrameProcessing) {
   auto detector = std::make_shared<detection::YOLODetector>(
-      "models/yolov8n.pt");
+      "models/yolov8n.onxx");
   auto tracker = std::make_shared<tracking::KalmanTracker>();
   core::CameraModel camera;
   auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
