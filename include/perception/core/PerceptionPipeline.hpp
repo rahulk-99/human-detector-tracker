@@ -13,6 +13,7 @@
 #include <vector>
 #include <string>
 #include "../detection/IDetector.hpp"
+#include "../detection/Detection.hpp"
 #include "../tracking/ITracker.hpp"
 #include "ICoordinateTransform.hpp"
 #include "CameraModel.hpp"
@@ -26,10 +27,11 @@ namespace core {
  * @brief Output from perception pipeline for one frame
  */
 struct PerceptionOutput {
-  std::vector<tracking::Track> tracks;  ///< Active tracked humans
-  double timestamp;                     ///< Frame timestamp (seconds)
-  int frameCount;                       ///< Total frames processed
-  bool success;                         ///< Processing success flag
+  std::vector<tracking::Track> tracks;      ///< Active tracked humans
+  std::vector<detection::Detection> detections;  ///< Raw detections from detector
+  double timestamp;                         ///< Frame timestamp (seconds)
+  int frameCount;                           ///< Total frames processed
+  bool success;                             ///< Processing success flag
 };
 
 /**

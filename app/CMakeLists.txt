@@ -20,4 +20,19 @@ target_link_libraries(shell-app PUBLIC
   perception
   )
 
+# Webcam demo executable
+add_executable(webcam-demo
+  webcam_demo.cpp
+  )
+
+target_include_directories(webcam-demo PUBLIC
+  ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries(webcam-demo PUBLIC
+  myLib1
+  myLib2
+  perception
+)
+
   
