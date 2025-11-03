@@ -96,7 +96,8 @@ TEST(DetectionTest, ValidityCheck) {
 // ============================================================================
 
 TEST(YOLODetectorTest, Initialization) {
-  detection::YOLODetector detector("models/yolov8n.onnx");
+  // Use a non-existent model path to test initialization in mock mode
+  detection::YOLODetector detector("models/nonexistent_model.onnx");
   EXPECT_TRUE(detector.isInitialized());
   EXPECT_FLOAT_EQ(detector.getConfidenceThreshold(), 0.5f);
   EXPECT_EQ(detector.getInputSize(), 640);
@@ -121,9 +122,60 @@ TEST(YOLODetectorTest, MockDetection) {
 }
 
 TEST(YOLODetectorTest, ThresholdSetting) {
-  detection::YOLODetector detector("models/yolov8n.onnx");
+  // Use a non-existent model path to test threshold setting in mock mode
+  detection::YOLODetector detector("models/nonexistent_model.onnx");
   detector.setConfidenceThreshold(0.7f);
   EXPECT_FLOAT_EQ(detector.getConfidenceThreshold(), 0.7f);
+}
+
+TEST(YOLODetectorTest, ConstructorErrors) {
+  // Empty model path
+  EXPECT_THROW(detection::YOLODetector("", 0.5f, 0.4f, 640), std::invalid_argument);
+  
+  // Invalid confidence threshold
+  EXPECT_THROW(detection::YOLODetector("model.onnx", -0.1f, 0.4f, 640), std::invalid_argument);
+  EXPECT_THROW(detection::YOLODetector("model.onnx", 1.5f, 0.4f, 640), std::invalid_argument);
+  
+  // Invalid NMS threshold
+  EXPECT_THROW(detection::YOLODetector("model.onnx", 0.5f, -0.1f, 640), std::invalid_argument);
+  EXPECT_THROW(detection::YOLODetector("model.onnx", 0.5f, 1.5f, 640), std::invalid_argument);
+  
+  // Invalid input size
+  EXPECT_THROW(detection::YOLODetector("model.onnx", 0.5f, 0.4f, 0), std::invalid_argument);
+  EXPECT_THROW(detection::YOLODetector("model.onnx", 0.5f, 0.4f, -10), std::invalid_argument);
+}
+
+TEST(YOLODetectorTest, NmsThresholdMethods) {
+  detection::YOLODetector detector("models/nonexistent_model.onnx");
+  
+  // Test default NMS threshold
+  EXPECT_FLOAT_EQ(detector.getNmsThreshold(), 0.4f);
+  
+  // Test setter
+  detector.setNmsThreshold(0.6f);
+  EXPECT_FLOAT_EQ(detector.getNmsThreshold(), 0.6f);
+  
+  // Test invalid thresholds
+  EXPECT_THROW(detector.setNmsThreshold(-0.1f), std::invalid_argument);
+  EXPECT_THROW(detector.setNmsThreshold(1.5f), std::invalid_argument);
+}
+
+// Note: applyNMS() is a private method, so we cannot test it directly.
+// NMS is tested indirectly through the detect() method.
+
+TEST(YOLODetectorTest, SetConfidenceThresholdErrors) {
+  detection::YOLODetector detector("models/nonexistent_model.onnx");
+  
+  // Test invalid confidence thresholds
+  EXPECT_THROW(detector.setConfidenceThreshold(-0.1f), std::invalid_argument);
+  EXPECT_THROW(detector.setConfidenceThreshold(1.5f), std::invalid_argument);
+  
+  // Valid thresholds should work
+  detector.setConfidenceThreshold(0.0f);
+  EXPECT_FLOAT_EQ(detector.getConfidenceThreshold(), 0.0f);
+  
+  detector.setConfidenceThreshold(1.0f);
+  EXPECT_FLOAT_EQ(detector.getConfidenceThreshold(), 1.0f);
 }
 
 // ============================================================================
@@ -299,6 +351,79 @@ TEST(CameraModelTest, ParameterizedConstructor) {
   EXPECT_EQ(camera.getImageHeight(), 480);
 }
 
+TEST(CameraModelTest, LoadCalibration) {
+  core::CameraModel camera;
+  bool result = camera.loadCalibration("calibration.xml");
+  EXPECT_TRUE(result);  // Phase 0 stub always returns true
+}
+
+TEST(CameraModelTest, CameraPose) {
+  core::CameraModel camera;
+  
+  // Test default camera position
+  const auto& defaultPos = camera.getCameraPosition();
+  EXPECT_FLOAT_EQ(defaultPos.getX(), 0.0f);
+  EXPECT_FLOAT_EQ(defaultPos.getY(), 0.0f);
+  EXPECT_FLOAT_EQ(defaultPos.getZ(), 0.5f);
+  
+  // Test default rotation (identity matrix)
+  const float* defaultRot = camera.getCameraRotation();
+  EXPECT_FLOAT_EQ(defaultRot[0], 1.0f);  // [0][0] = 1
+  EXPECT_FLOAT_EQ(defaultRot[4], 1.0f);  // [1][1] = 1
+  EXPECT_FLOAT_EQ(defaultRot[8], 1.0f);  // [2][2] = 1
+  
+  // Test setting camera pose
+  utils::Position3D newPos(0.1f, 0.2f, 0.6f);
+  float rotation[9] = {1.0f, 0.0f, 0.0f,
+                       0.0f, 1.0f, 0.0f,
+                       0.0f, 0.0f, 1.0f};
+  camera.setCameraPose(newPos, rotation);
+  
+  const auto& updatedPos = camera.getCameraPosition();
+  EXPECT_FLOAT_EQ(updatedPos.getX(), 0.1f);
+  EXPECT_FLOAT_EQ(updatedPos.getY(), 0.2f);
+  EXPECT_FLOAT_EQ(updatedPos.getZ(), 0.6f);
+  
+  const float* updatedRot = camera.getCameraRotation();
+  EXPECT_FLOAT_EQ(updatedRot[0], 1.0f);
+}
+
+TEST(CameraModelTest, SetIntrinsics) {
+  core::CameraModel camera;
+  
+  // Test default intrinsics
+  EXPECT_FLOAT_EQ(camera.getFocalLengthX(), 800.0f);
+  EXPECT_FLOAT_EQ(camera.getFocalLengthY(), 800.0f);
+  EXPECT_FLOAT_EQ(camera.getPrincipalPointX(), 320.0f);
+  EXPECT_FLOAT_EQ(camera.getPrincipalPointY(), 240.0f);
+  
+  // Test setting intrinsics
+  camera.setIntrinsics(900.0f, 850.0f, 350.0f, 250.0f);
+  EXPECT_FLOAT_EQ(camera.getFocalLengthX(), 900.0f);
+  EXPECT_FLOAT_EQ(camera.getFocalLengthY(), 850.0f);
+  EXPECT_FLOAT_EQ(camera.getPrincipalPointX(), 350.0f);
+  EXPECT_FLOAT_EQ(camera.getPrincipalPointY(), 250.0f);
+}
+
+TEST(CameraModelTest, IsCalibrated) {
+  core::CameraModel camera;
+  EXPECT_TRUE(camera.isCalibrated());
+  
+  core::CameraModel camera2(700.0f, 700.0f, 300.0f, 200.0f, 640, 480);
+  EXPECT_TRUE(camera2.isCalibrated());
+}
+
+TEST(CameraModelTest, Getters) {
+  core::CameraModel camera(900.0f, 850.0f, 350.0f, 250.0f, 1280, 720);
+  
+  EXPECT_FLOAT_EQ(camera.getFocalLengthX(), 900.0f);
+  EXPECT_FLOAT_EQ(camera.getFocalLengthY(), 850.0f);
+  EXPECT_FLOAT_EQ(camera.getPrincipalPointX(), 350.0f);
+  EXPECT_FLOAT_EQ(camera.getPrincipalPointY(), 250.0f);
+  EXPECT_EQ(camera.getImageWidth(), 1280);
+  EXPECT_EQ(camera.getImageHeight(), 720);
+}
+
 // ============================================================================
 // CoordinateTransformer Tests
 // ============================================================================
@@ -323,13 +448,77 @@ TEST(CoordinateTransformerTest, ImageToRobotFrame) {
   EXPECT_TRUE(std::isfinite(robotPos.getZ()));
 }
 
+TEST(CoordinateTransformerTest, Setters) {
+  core::CameraModel camera;
+  core::CoordinateTransformer transformer(camera);
+  
+  // Test default average human height
+  EXPECT_FLOAT_EQ(transformer.getAverageHumanHeight(), 1.7f);
+  
+  // Test setting average human height
+  transformer.setAverageHumanHeight(1.8f);
+  EXPECT_FLOAT_EQ(transformer.getAverageHumanHeight(), 1.8f);
+  
+  // Test setting camera model
+  core::CameraModel newCamera(900.0f, 900.0f, 320.0f, 240.0f, 640, 480);
+  transformer.setCameraModel(newCamera);
+  EXPECT_FLOAT_EQ(transformer.getCameraModel().getFocalLengthX(), 900.0f);
+}
+
+TEST(CoordinateTransformerTest, PixelToCameraFrame) {
+  core::CameraModel camera;
+  core::CoordinateTransformer transformer(camera);
+  
+  // Test pixel to camera frame conversion
+  utils::Position3D camPos = transformer.pixelToCameraFrame(320.0f, 240.0f, 2.0f, 640, 480);
+  
+  // Should return valid position with correct depth
+  EXPECT_TRUE(std::isfinite(camPos.getX()));
+  EXPECT_TRUE(std::isfinite(camPos.getY()));
+  EXPECT_FLOAT_EQ(camPos.getZ(), 2.0f);
+  
+  // Test with different pixel coordinates
+  utils::Position3D camPos2 = transformer.pixelToCameraFrame(0.0f, 0.0f, 1.5f, 640, 480);
+  EXPECT_TRUE(std::isfinite(camPos2.getX()));
+  EXPECT_FLOAT_EQ(camPos2.getZ(), 1.5f);
+}
+
+TEST(CoordinateTransformerTest, CameraToRobotFrame) {
+  core::CameraModel camera;
+  core::CoordinateTransformer transformer(camera);
+  
+  // Test camera to robot frame transformation
+  utils::Position3D cameraPos(1.0f, 0.0f, 2.0f);
+  utils::Position3D robotPos = transformer.cameraToRobotFrame(cameraPos);
+  
+  // Should return valid position
+  EXPECT_TRUE(std::isfinite(robotPos.getX()));
+  EXPECT_TRUE(std::isfinite(robotPos.getY()));
+  EXPECT_TRUE(std::isfinite(robotPos.getZ()));
+  
+  // Test with zero position
+  utils::Position3D zeroPos(0.0f, 0.0f, 0.0f);
+  utils::Position3D robotZero = transformer.cameraToRobotFrame(zeroPos);
+  EXPECT_TRUE(std::isfinite(robotZero.getX()));
+}
+
+TEST(CoordinateTransformerTest, GetCameraModel) {
+  core::CameraModel camera(900.0f, 850.0f, 350.0f, 250.0f, 1280, 720);
+  core::CoordinateTransformer transformer(camera);
+  
+  const auto& retrievedCamera = transformer.getCameraModel();
+  EXPECT_FLOAT_EQ(retrievedCamera.getFocalLengthX(), 900.0f);
+  EXPECT_FLOAT_EQ(retrievedCamera.getFocalLengthY(), 850.0f);
+}
+
 // ============================================================================
 // PerceptionPipeline Tests
 // ============================================================================
 
 TEST(PerceptionPipelineTest, Initialization) {
+  // Use a non-existent model path for testing
   auto detector = std::make_shared<detection::YOLODetector>(
-      "models/yolov8n.onxx");
+      "models/nonexistent_model.onnx");
   auto tracker = std::make_shared<tracking::KalmanTracker>();
   core::CameraModel camera;
   auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
@@ -341,8 +530,9 @@ TEST(PerceptionPipelineTest, Initialization) {
 }
 
 TEST(PerceptionPipelineTest, FrameProcessing) {
+  // Use a non-existent model path for testing
   auto detector = std::make_shared<detection::YOLODetector>(
-      "models/yolov8n.onxx");
+      "models/nonexistent_model.onnx");
   auto tracker = std::make_shared<tracking::KalmanTracker>();
   core::CameraModel camera;
   auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
@@ -385,5 +575,88 @@ TEST(GeometryUtilsTest, Clamp) {
   EXPECT_FLOAT_EQ(utils::GeometryUtils::clamp(5.0f, 0.0f, 10.0f), 5.0f);
   EXPECT_FLOAT_EQ(utils::GeometryUtils::clamp(-1.0f, 0.0f, 10.0f), 0.0f);
   EXPECT_FLOAT_EQ(utils::GeometryUtils::clamp(15.0f, 0.0f, 10.0f), 10.0f);
+}
+
+TEST(GeometryUtilsTest, ComputeUnionArea) {
+  detection::BoundingBox bbox1(100.0f, 100.0f, 50.0f, 50.0f);
+  detection::BoundingBox bbox2(100.0f, 100.0f, 50.0f, 50.0f);
+  
+  float unionArea = utils::GeometryUtils::computeUnionArea(bbox1, bbox2);
+  EXPECT_FLOAT_EQ(unionArea, 2500.0f);  // Same as individual area when fully overlapping
+  
+  detection::BoundingBox bbox3(200.0f, 200.0f, 50.0f, 50.0f);
+  float unionArea2 = utils::GeometryUtils::computeUnionArea(bbox1, bbox3);
+  EXPECT_FLOAT_EQ(unionArea2, 5000.0f);  // Sum of areas when no overlap
+}
+
+TEST(GeometryUtilsTest, ApplyRotation) {
+  utils::Position3D pos(1.0f, 0.0f, 0.0f);
+  
+  // Identity rotation matrix
+  float identity[9] = {1.0f, 0.0f, 0.0f,
+                      0.0f, 1.0f, 0.0f,
+                      0.0f, 0.0f, 1.0f};
+  utils::Position3D rotated = utils::GeometryUtils::applyRotation(pos, identity);
+  
+  EXPECT_FLOAT_EQ(rotated.getX(), 1.0f);
+  EXPECT_FLOAT_EQ(rotated.getY(), 0.0f);
+  EXPECT_FLOAT_EQ(rotated.getZ(), 0.0f);
+  
+  // 90-degree rotation around Z-axis
+  float rot90[9] = {0.0f, -1.0f, 0.0f,
+                    1.0f,  0.0f, 0.0f,
+                    0.0f,  0.0f, 1.0f};
+  utils::Position3D rotated90 = utils::GeometryUtils::applyRotation(pos, rot90);
+  EXPECT_NEAR(rotated90.getX(), 0.0f, 0.001f);
+  EXPECT_NEAR(rotated90.getY(), 1.0f, 0.001f);
+}
+
+TEST(GeometryUtilsTest, ApplyTranslation) {
+  utils::Position3D pos(1.0f, 2.0f, 3.0f);
+  utils::Position3D translation(0.5f, 0.5f, 0.5f);
+  
+  utils::Position3D translated = utils::GeometryUtils::applyTranslation(pos, translation);
+  
+  EXPECT_FLOAT_EQ(translated.getX(), 1.5f);
+  EXPECT_FLOAT_EQ(translated.getY(), 2.5f);
+  EXPECT_FLOAT_EQ(translated.getZ(), 3.5f);
+}
+
+TEST(GeometryUtilsTest, PixelToNormalized) {
+  float normX, normY;
+  
+  utils::GeometryUtils::pixelToNormalized(320.0f, 240.0f, 640, 480, normX, normY);
+  
+  // Center pixel should map to (0, 0) in normalized coordinates
+  EXPECT_NEAR(normX, 0.0f, 0.001f);
+  EXPECT_NEAR(normY, 0.0f, 0.001f);
+  
+  // Top-left corner should map to (-1, -1)
+  utils::GeometryUtils::pixelToNormalized(0.0f, 0.0f, 640, 480, normX, normY);
+  EXPECT_NEAR(normX, -1.0f, 0.001f);
+  EXPECT_NEAR(normY, -1.0f, 0.001f);
+  
+  // Bottom-right corner should map to (1, 1)
+  utils::GeometryUtils::pixelToNormalized(640.0f, 480.0f, 640, 480, normX, normY);
+  EXPECT_NEAR(normX, 1.0f, 0.001f);
+  EXPECT_NEAR(normY, 1.0f, 0.001f);
+}
+
+TEST(GeometryUtilsTest, DepthEstimationEdgeCases) {
+  // Test with zero height bounding box
+  detection::BoundingBox zeroHeightBbox(320.0f, 240.0f, 100.0f, 0.0f);
+  float depth = utils::GeometryUtils::estimateDepthFromBboxHeight(zeroHeightBbox, 800.0f, 1.7f);
+  EXPECT_FLOAT_EQ(depth, 0.0f);
+  
+  // Test with negative height (should handle gracefully)
+  detection::BoundingBox negativeHeightBbox(320.0f, 240.0f, 100.0f, -10.0f);
+  float depth2 = utils::GeometryUtils::estimateDepthFromBboxHeight(negativeHeightBbox, 800.0f, 1.7f);
+  EXPECT_FLOAT_EQ(depth2, 0.0f);
+}
+
+// Main function for GoogleTest
+int main(int argc, char** argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
 
