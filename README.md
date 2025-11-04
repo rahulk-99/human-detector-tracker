@@ -171,7 +171,7 @@ cmake -S ./ -B build/
 cmake --build build/
 
 # Run the main application
-./build/app/shell-app
+./build/app/shell-app --video data/ADL-Rundle-6-raw.mp4 models/yolov8n.onnx
 
 # Run unit tests
 cd build/

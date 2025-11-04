@@ -5,6 +5,8 @@ add_executable(cpp-test
   perception_test.cpp
   video_processing_test.cpp
   visualization_test.cpp
+  error_handling_test.cpp
+  tracking_test.cpp
   )
 
 # Any include directories needed to build this target.
@@ -19,8 +21,6 @@ target_include_directories(cpp-test PUBLIC
 target_link_libraries(cpp-test PUBLIC
   # list of libraries:
   gtest
-  myLib1
-  myLib2
   perception
   )
 

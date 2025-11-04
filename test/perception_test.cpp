@@ -10,8 +10,6 @@
 #include "perception/detection/BoundingBox.hpp"
 #include "perception/detection/Detection.hpp"
 #include "perception/detection/YOLODetector.hpp"
-#include "perception/tracking/Track.hpp"
-#include "perception/tracking/KalmanFilter.hpp"
 #include "perception/tracking/KalmanTracker.hpp"
 #include "perception/core/CameraModel.hpp"
 #include "perception/core/CoordinateTransformer.hpp"
@@ -226,110 +224,6 @@ TEST(Position3DTest, MagnitudeAndDistance) {
   
   utils::Position3D pos2(0.0f, 0.0f, 0.0f);
   EXPECT_FLOAT_EQ(pos1.distanceTo(pos2), 5.0f);
-}
-
-// ============================================================================
-// Track Tests
-// ============================================================================
-
-TEST(TrackTest, Initialization) {
-  detection::BoundingBox bbox(100.0f, 200.0f, 50.0f, 100.0f);
-  utils::Position3D pos(1.0f, 2.0f, 3.0f);
-  tracking::Track track(1, bbox, pos, 0.0);
-  
-  EXPECT_EQ(track.getId(), 1);
-  EXPECT_EQ(track.getState(), tracking::TrackState::TENTATIVE);
-  EXPECT_EQ(track.getHitCount(), 1);
-  EXPECT_EQ(track.getMissCount(), 0);
-}
-
-TEST(TrackTest, Update) {
-  detection::BoundingBox bbox(100.0f, 200.0f, 50.0f, 100.0f);
-  utils::Position3D pos(1.0f, 2.0f, 3.0f);
-  tracking::Track track(1, bbox, pos, 0.0);
-  
-  // Update track
-  utils::Position3D newPos(1.5f, 2.5f, 3.5f);
-  track.update(bbox, newPos, 0.1);
-  
-  EXPECT_EQ(track.getHitCount(), 2);
-  EXPECT_EQ(track.getMissCount(), 0);
-}
-
-TEST(TrackTest, StateTransition) {
-  detection::BoundingBox bbox(100.0f, 200.0f, 50.0f, 100.0f);
-  utils::Position3D pos(1.0f, 2.0f, 3.0f);
-  tracking::Track track(1, bbox, pos, 0.0);
-  
-  // After 3 updates, should become CONFIRMED
-  for (int i = 0; i < 3; ++i) {
-    track.update(bbox, pos, i * 0.1);
-  }
-  EXPECT_EQ(track.getState(), tracking::TrackState::CONFIRMED);
-}
-
-// ============================================================================
-// KalmanFilter Tests
-// ============================================================================
-
-TEST(KalmanFilterTest, Initialization) {
-  tracking::KalmanFilter kf(6, 3);
-  EXPECT_FALSE(kf.isInitialized());
-  
-  std::vector<float> state = {0, 0, 0, 0, 0, 0};
-  std::vector<float> cov(36, 0);
-  for (int i = 0; i < 6; ++i) {
-    cov[i * 6 + i] = 1.0f;
-  }
-  
-  kf.initialize(state, cov);
-  EXPECT_TRUE(kf.isInitialized());
-}
-
-TEST(KalmanFilterTest, PredictUpdate) {
-  tracking::KalmanFilter kf(6, 3);
-  
-  std::vector<float> state = {1.0f, 2.0f, 3.0f, 0.0f, 0.0f, 0.0f};
-  std::vector<float> cov(36, 0);
-  for (int i = 0; i < 6; ++i) {
-    cov[i * 6 + i] = 1.0f;
-  }
-  
-  kf.initialize(state, cov);
-  kf.predict(0.1f);
-  
-  std::vector<float> measurement = {1.1f, 2.1f, 3.1f};
-  kf.update(measurement);
-  
-  auto updatedState = kf.getState();
-  EXPECT_EQ(updatedState.size(), 6);
-}
-
-// ============================================================================
-// KalmanTracker Tests
-// ============================================================================
-
-TEST(KalmanTrackerTest, Initialization) {
-  tracking::KalmanTracker tracker;
-  EXPECT_EQ(tracker.getTrackCount(), 0);
-}
-
-TEST(KalmanTrackerTest, TrackCreationAndUpdate) {
-  tracking::KalmanTracker tracker;
-  
-  detection::BoundingBox bbox(100.0f, 200.0f, 50.0f, 100.0f);
-  detection::Detection det(bbox, 0.85f, 0, "person");
-  std::vector<detection::Detection> detections = {det};
-  
-  tracker.update(detections, 0.0);
-  
-  // Should create one new track (tentative)
-  // After min_hits it becomes confirmed
-  for (int i = 1; i < 5; ++i) {
-    tracker.update(detections, i * 0.1);
-  }
-  
-  EXPECT_GT(tracker.getTrackCount(), 0);
 }
 
 // ============================================================================
