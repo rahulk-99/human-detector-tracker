@@ -14,17 +14,18 @@ The **Human Perception System (HPS)** is a modular C++17 robotics perception mod
 
 - [Main Features](#main-features)
 - [Quick Start](#quick-start)
+- [Project Documentation](#project-documentation)
 - [Architecture](#architecture)
 - [Usage](#usage)
 - [Testing](#testing)
 - [UML Diagrams](#uml-diagrams)
 - [Design Patterns](#design-patterns)
-- [Project Documentation](#project-documentation)
 - [Phase Status](#phase-status)
 - [Algorithm Details](#algorithm-details)
 - [Code Quality](#code-quality)
 - [Troubleshooting](#troubleshooting)
 - [Authors](#authors)
+- [About Us](#about-us)
 
 ## Main Features
 
@@ -67,6 +68,19 @@ The **Human Perception System (HPS)** is a modular C++17 robotics perception mod
 - **OpenCV 4.8+** (tested with 4.10.0) - required for YOLO inference
 - **GoogleTest** (fetched automatically by CMake)
 - **ONNX models** (YOLOv5/YOLOv8 ONNX format recommended)
+
+## Project Documentation
+
+**Phase 2**:
+- [Phase 2 Video & Documentation](https://drive.google.com/drive/folders/1EyaaiMVev9sIGax7qiCHixWLD2Pylc8X?usp=sharing)
+- [Product Backlog (AIP Sheet)](https://docs.google.com/spreadsheets/d/1wcmKYTpv4yeAv1NeTeLlhB47EcRxOFroaWx42daGazo/edit?usp=sharing)
+
+**Phase 1**:
+- [Phase 1 API Video](https://drive.google.com/file/d/1t2W6wct0taBPDg3CrEwSaJRvRWU8mBnN/view?usp=sharing)
+- [Sprint Planning Notes](https://docs.google.com/document/d/1IPIIQfQ-b3CGt2YbmqxJesh1Z4LAwaoxIcWlEhEjiBU/edit?usp=sharing)
+
+**Phase 0**:
+- [Proposal Document, QuadChart & Video](https://drive.google.com/drive/folders/15M2WV5y34R-rcf8K7gPXKGJ_NX8htvk3?usp=sharing)
 
 ## Architecture
 
@@ -175,19 +189,6 @@ convert UML/revised_phase2/*.png UML/revised_phase2/*.pdf
 - **RAII Pattern**: Smart pointers for automatic memory management
 - **Pimpl Idiom**: `YOLODetector::Impl` for implementation hiding
 
-## Project Documentation
-
-**Phase 2**:
-- [Phase 2 Video & Documentation](https://drive.google.com/drive/folders/1EyaaiMVev9sIGax7qiCHixWLD2Pylc8X?usp=sharing)
-- [Product Backlog (AIP Sheet)](https://docs.google.com/spreadsheets/d/1wcmKYTpv4yeAv1NeTeLlhB47EcRxOFroaWx42daGazo/edit?usp=sharing)
-
-**Phase 1**:
-- [Phase 1 API Video](https://drive.google.com/file/d/1t2W6wct0taBPDg3CrEwSaJRvRWU8mBnN/view?usp=sharing)
-- [Sprint Planning Notes](https://docs.google.com/document/d/1IPIIQfQ-b3CGt2YbmqxJesh1Z4LAwaoxIcWlEhEjiBU/edit?usp=sharing)
-
-**Phase 0**:
-- [Proposal Document, QuadChart & Video](https://drive.google.com/drive/folders/15M2WV5y34R-rcf8K7gPXKGJ_NX8htvk3?usp=sharing)
-
 ## Phase Status
 
 ### Phase 0 ✅ | Phase 1 ✅ | Phase 2 ✅
@@ -236,12 +237,12 @@ Follows [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.ht
 
 ```bash
 cppcheck --enable=all --error-exitcode=1 --std=c++14 \
-  --suppress=syntaxError:libs/perception/detection/YOLODetector.cpp:481 \
-  --suppress=unusedFunction:test/error_handling_test.cpp:71 \
+  --suppress=syntaxError:libs/perception/detection/YOLODetector.cpp:478 \
+  --suppress=unusedFunction:test/error_handling_test.cpp:72 \
   -I include/ $(find . -name "*.cpp" | grep -v "/build/")
 ```
 
-**Note**: The syntax error in `YOLODetector.cpp:481` is a false positive from cppcheck's preprocessor parsing. The `SetUp()` function in `error_handling_test.cpp:71` is used by GoogleTest framework automatically.
+**Note**: The syntax error in `YOLODetector.cpp:478` is a false positive from cppcheck's preprocessor parsing. The `SetUp()` function in `error_handling_test.cpp:72` is used by GoogleTest framework automatically.
 
 ## Troubleshooting
 
@@ -270,6 +271,16 @@ sudo ldconfig
 **Course**: ENPM700 - Software Development for Robotics  
 **Institution**: University of Maryland  
 **Semester**: Fall 2025
+
+## About Us
+
+### Venkata Madhav Tadavarthi
+
+My name is Venkata Madhav, I am currently pursuing my Masters in Robotics at University of Maryland, College Park. I am passionate about robotics, specifically underwater robots. My research interests include perception, planning and controls. I am excited to contribute to this project!
+
+### Rahul Kumar
+
+My name is Rahul Kumar. I am a Robotics Master's student at the University of Maryland, College Park, with interest in Robot Learning, Computer Vision, and Autonomous Systems. This project covers multiple domains, which makes it exciting to work on.
 
 ## License
 
