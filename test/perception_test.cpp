@@ -458,7 +458,8 @@ TEST(CoordinateTransformerTest, Initialization) {
   core::CameraModel camera;
   core::CoordinateTransformer transformer(camera);
   
-  // Transformer initialized successfully
+  // Transformer initialized successfully - use transformer to avoid unused variable warning
+  (void)transformer;
   EXPECT_TRUE(true);
 }
 

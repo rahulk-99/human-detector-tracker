@@ -63,16 +63,14 @@ class VisualizationTest : public ::testing::Test {
 // Test visualization with empty detections and tracks
 TEST_F(VisualizationTest, VisualizationWithEmptyOutput) {
   core::PerceptionOutput emptyOutput;
-  emptyOutput.frameCount = 1;
-  emptyOutput.timestamp = 0.0;
-  emptyOutput.success = true;
   emptyOutput.detections.clear();
   emptyOutput.tracks.clear();
   
   // Should not crash with empty output
-  EXPECT_NO_THROW({
-    pipeline_->processFrame(frameData_.data(), width_, height_, channels_, 0.0);
-  });
+  core::PerceptionOutput result = pipeline_->processFrame(frameData_.data(), width_, height_, channels_, 0.0);
+  EXPECT_EQ(result.frameCount, 1);
+  EXPECT_EQ(result.timestamp, 0.0);
+  EXPECT_TRUE(result.success);
 }
 
 // Test visualization with bounding box detections
@@ -82,9 +80,6 @@ TEST_F(VisualizationTest, VisualizationWithBoundingBoxes) {
   detection::Detection det(bbox, 0.85f, 0, "person");
   
   core::PerceptionOutput output;
-  output.frameCount = 1;
-  output.timestamp = 0.0;
-  output.success = true;
   output.detections.push_back(det);
   output.tracks.clear();
   
@@ -163,9 +158,6 @@ TEST_F(VisualizationTest, VisualizationWithEdgeCaseBoundingBoxes) {
   detection::Detection det(bbox, 0.8f, 0, "person");
   
   core::PerceptionOutput output;
-  output.frameCount = 1;
-  output.timestamp = 0.0;
-  output.success = true;
   output.detections.push_back(det);
   output.tracks.clear();
   

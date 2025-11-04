@@ -27,16 +27,14 @@ class YOLODetector::Impl {
   cv::dnn::Net net_;
   std::vector<std::string> classNames_;
   bool realMode_;  // Flag to indicate if real YOLO is available
-#endif
   
-  Impl() {
-#ifdef HAVE_OPENCV
-    realMode_ = false;  // Start in mock mode
-    
+  Impl() : classNames_({"person"}), realMode_(false) {
     // Only store "person" class name since we only detect humans
-    classNames_ = {"person"};
-#endif
   }
+#else
+  // Empty class when OpenCV is not available
+  Impl() = default;
+#endif
   
   ~Impl() = default;
 };
@@ -474,7 +472,7 @@ std::vector<Detection> YOLODetector::applyNMS(
   return filteredDetections;
   // LCOV_EXCL_STOP
 #endif
-}
+}  // end of applyNMS
 
 }  // namespace detection
 }  // namespace perception

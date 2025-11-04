@@ -68,6 +68,7 @@ TEST(YOLODetectorErrorTest, InvalidChannels) {
 
 class PerceptionPipelineErrorTest : public ::testing::Test {
  protected:
+  // cppcheck-suppress unusedFunction
   void SetUp() override {
     detector_ = std::make_shared<detection::YOLODetector>("models/nonexistent_model.onnx");
     tracker_ = std::make_shared<tracking::KalmanTracker>();
@@ -149,8 +150,8 @@ TEST(CoordinateTransformerEdgeTest, ImageToRobotFrameWithZeroBoundingBox) {
   detection::BoundingBox zeroBox(320.0f, 240.0f, 0.0f, 0.0f);
   utils::Position3D robotPos = transformer.imageToRobotFrame(zeroBox, 640, 480);
   
-  // Should handle gracefully
-  EXPECT_TRUE(std::isfinite(robotPos.getX()) || !std::isfinite(robotPos.getX()));
+  // Should handle gracefully - result should be valid (finite values)
+  EXPECT_TRUE(std::isfinite(robotPos.getX()) && std::isfinite(robotPos.getY()) && std::isfinite(robotPos.getZ()));
 }
 
 TEST(CoordinateTransformerEdgeTest, ImageToRobotFrameWithNegativeBoundingBox) {
@@ -161,8 +162,8 @@ TEST(CoordinateTransformerEdgeTest, ImageToRobotFrameWithNegativeBoundingBox) {
   detection::BoundingBox negBox(320.0f, 240.0f, -10.0f, -20.0f);
   utils::Position3D robotPos = transformer.imageToRobotFrame(negBox, 640, 480);
   
-  // Should handle gracefully
-  EXPECT_TRUE(std::isfinite(robotPos.getX()) || !std::isfinite(robotPos.getX()));
+  // Should handle gracefully - result should be valid (finite values)
+  EXPECT_TRUE(std::isfinite(robotPos.getX()) && std::isfinite(robotPos.getY()) && std::isfinite(robotPos.getZ()));
 }
 
 TEST(CoordinateTransformerEdgeTest, PixelToCameraFrameWithZeroDepth) {
@@ -172,8 +173,8 @@ TEST(CoordinateTransformerEdgeTest, PixelToCameraFrameWithZeroDepth) {
   // Zero depth
   utils::Position3D camPos = transformer.pixelToCameraFrame(320.0f, 240.0f, 0.0f, 640, 480);
   
-  // Should handle gracefully
-  EXPECT_TRUE(std::isfinite(camPos.getX()) || !std::isfinite(camPos.getX()));
+  // Should handle gracefully - result should be valid (finite values)
+  EXPECT_TRUE(std::isfinite(camPos.getX()) && std::isfinite(camPos.getY()) && std::isfinite(camPos.getZ()));
 }
 
 TEST(CoordinateTransformerEdgeTest, PixelToCameraFrameWithNegativeDepth) {
@@ -183,7 +184,7 @@ TEST(CoordinateTransformerEdgeTest, PixelToCameraFrameWithNegativeDepth) {
   // Negative depth
   utils::Position3D camPos = transformer.pixelToCameraFrame(320.0f, 240.0f, -1.0f, 640, 480);
   
-  // Should handle gracefully
-  EXPECT_TRUE(std::isfinite(camPos.getX()) || !std::isfinite(camPos.getX()));
+  // Should handle gracefully - result should be valid (finite values)
+  EXPECT_TRUE(std::isfinite(camPos.getX()) && std::isfinite(camPos.getY()) && std::isfinite(camPos.getZ()));
 }
 
