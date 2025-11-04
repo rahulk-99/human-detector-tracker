@@ -26,7 +26,6 @@ class YOLODetector::Impl {
 #ifdef HAVE_OPENCV
   cv::dnn::Net net_;
   std::vector<std::string> classNames_;
-  std::vector<cv::Scalar> colors_;
   bool realMode_;  // Flag to indicate if real YOLO is available
 #endif
   
@@ -34,25 +33,8 @@ class YOLODetector::Impl {
 #ifdef HAVE_OPENCV
     realMode_ = false;  // Start in mock mode
     
-    // Initialize COCO class names (80 classes)
-    classNames_ = {
-        "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat",
-        "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
-        "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack",
-        "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball",
-        "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket",
-        "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
-        "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake",
-        "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop",
-        "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink",
-        "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"
-    };
-    
-    // Generate random colors for each class
-    colors_.resize(classNames_.size());
-    for (size_t i = 0; i < colors_.size(); ++i) {
-      colors_[i] = cv::Scalar(rand() % 256, rand() % 256, rand() % 256);
-    }
+    // Only store "person" class name since we only detect humans
+    classNames_ = {"person"};
 #endif
   }
   
@@ -108,24 +90,13 @@ bool YOLODetector::initialize() {
     
     bool modelLoaded = false;
     
-    // Try to load as ONNX first
+    // Load ONNX model
     try {
       pImpl_->net_ = cv::dnn::readNetFromONNX(modelPath_);
       std::cout << "[YOLODetector] Loaded ONNX model successfully" << std::endl;
       modelLoaded = true;
     } catch (const cv::Exception& e) {
       std::cout << "[YOLODetector] ONNX loading failed: " << e.what() << std::endl;
-    }
-    
-    // Try PyTorch if ONNX failed
-    if (!modelLoaded) {
-      try {
-        pImpl_->net_ = cv::dnn::readNetFromTorch(modelPath_);
-        std::cout << "[YOLODetector] Loaded PyTorch model successfully" << std::endl;
-        modelLoaded = true;
-      } catch (const cv::Exception& e2) {
-        std::cout << "[YOLODetector] PyTorch loading failed: " << e2.what() << std::endl;
-      }
     }
     
     if (modelLoaded) {
@@ -245,7 +216,7 @@ std::vector<Detection> YOLODetector::postprocessOutput(const std::vector<cv::Mat
         // 84 = 4 (bbox: x, y, w, h) + 80 (class probabilities)
         
         // Get dimensions safely - check if size array is valid
-        if (output.size.p == nullptr || output.dims < 3) {
+        if (output.size.p == nullptr) {
           continue;  // Skip invalid output
         }
         
@@ -329,10 +300,8 @@ std::vector<Detection> YOLODetector::postprocessOutput(const std::vector<cv::Mat
             // Create bounding box
             BoundingBox bbox(centerX, centerY, width, height);
             
-            // Get class name
-            std::string className = (classId >= 0 && static_cast<size_t>(classId) < pImpl_->classNames_.size()) 
-                                   ? pImpl_->classNames_[classId] 
-                                   : "unknown";
+            // Get class name (only "person" since we only detect humans)
+            std::string className = (classId == 0) ? "person" : "unknown";
             
             // Create detection
             Detection detection(bbox, finalConfidence, classId, className);
@@ -340,80 +309,6 @@ std::vector<Detection> YOLODetector::postprocessOutput(const std::vector<cv::Mat
           }
         }
         }  // Close if (batch == 1 && channels == 84 && numDetections > 0)
-      } else if (output.dims == 2) {
-        // YOLOv5 format: [num_detections, 85] - legacy support
-        for (int i = 0; i < output.rows; ++i) {
-          const float* data = output.ptr<float>(i);
-          
-          // Extract confidence and class probabilities
-          float confidence = data[4];
-          
-          // Find class with highest probability
-          int classId = -1;
-          float maxClassProb = 0.0f;
-          for (int j = 5; j < 85; ++j) {
-            if (data[j] > maxClassProb) {
-              maxClassProb = data[j];
-              classId = j - 5;
-            }
-          }
-          
-          // Calculate final confidence
-          float finalConfidence = confidence * maxClassProb;
-          
-          if (finalConfidence >= confidenceThreshold_ && classId >= 0) {
-            // Extract bounding box coordinates (center_x, center_y, width, height)
-            float centerX = data[0];
-            float centerY = data[1];
-            float width = data[2];
-            float height = data[3];
-            
-            // Scale coordinates back to original image size
-            float scaleX = static_cast<float>(originalWidth) / inputSize_;
-            float scaleY = static_cast<float>(originalHeight) / inputSize_;
-            
-            centerX *= scaleX;
-            centerY *= scaleY;
-            width *= scaleX;
-            height *= scaleY;
-            
-            // Validate bounding box dimensions
-            float minBoxArea = 0.001f * originalWidth * originalHeight;
-            float maxBoxArea = 0.9f * originalWidth * originalHeight;
-            float boxArea = width * height;
-            
-            if (width <= 0 || height <= 0 || 
-                boxArea < minBoxArea || boxArea > maxBoxArea ||
-                centerX < -width/2 || centerX > originalWidth + width/2 ||
-                centerY < -height/2 || centerY > originalHeight + height/2) {
-              continue;
-            }
-            
-            // Clamp bounding box to image bounds
-            float left = std::max(0.0f, centerX - width / 2.0f);
-            float top = std::max(0.0f, centerY - height / 2.0f);
-            float right = std::min(static_cast<float>(originalWidth), centerX + width / 2.0f);
-            float bottom = std::min(static_cast<float>(originalHeight), centerY + height / 2.0f);
-            
-            width = right - left;
-            height = bottom - top;
-            centerX = (left + right) / 2.0f;
-            centerY = (top + bottom) / 2.0f;
-            
-            boxArea = width * height;
-            if (boxArea < minBoxArea) {
-              continue;
-            }
-            
-            BoundingBox bbox(centerX, centerY, width, height);
-            std::string className = (classId >= 0 && static_cast<size_t>(classId) < pImpl_->classNames_.size()) 
-                                   ? pImpl_->classNames_[classId] 
-                                   : "unknown";
-            
-            Detection detection(bbox, finalConfidence, classId, className);
-            detections.push_back(detection);
-          }
-        }
       }
     }
     
@@ -442,9 +337,6 @@ std::vector<Detection> YOLODetector::detect(const unsigned char* frame,
 #ifdef HAVE_OPENCV
   if (pImpl_->realMode_) {
     try {
-      // Convert raw data to OpenCV Mat
-      cv::Mat image(height, width, CV_8UC3, const_cast<unsigned char*>(frame));
-      
       // Preprocess image
       preprocessImage(frame, width, height, channels);
       
@@ -467,7 +359,7 @@ std::vector<Detection> YOLODetector::detect(const unsigned char* frame,
       } catch (const cv::Exception& e) {
         std::cerr << "[YOLODetector] Postprocessing error (OpenCV 4.5.4 3D tensor issue): " 
                   << e.what() << std::endl;
-        std::cerr << "[YOLODetector] Recommendation: Upgrade to OpenCV 4.8+ or use older YOLOv5 model (v6.x)" << std::endl;
+        std::cerr << "[YOLODetector] Recommendation: Upgrade to OpenCV 4.8+ for better YOLOv8 support" << std::endl;
         throw;  // Re-throw to be caught by outer catch
       } catch (const std::exception& e) {
         std::cerr << "[YOLODetector] Postprocessing failed: " << e.what() << std::endl;
@@ -507,14 +399,6 @@ std::vector<Detection> YOLODetector::detect(const unsigned char* frame,
     mockWarningShown = true;
   }
   
-  // Optionally return a single centered detection for testing (commented out)
-  // Uncomment only for development/testing purposes:
-  /*
-  BoundingBox bbox(width * 0.5f, height * 0.5f, width * 0.25f, height * 0.6f);
-  Detection det(bbox, 0.90f, 0, "person");
-  detections.push_back(det);
-  */
-  
   return detections;
 }
 
@@ -531,7 +415,6 @@ std::vector<Detection> YOLODetector::applyNMS(
     // Convert detections to OpenCV format for NMS
     std::vector<cv::Rect> boxes;
     std::vector<float> confidences;
-    std::vector<int> classIds;
     
     for (const auto& det : detections) {
       const auto& bbox = det.getBoundingBox();
@@ -560,7 +443,6 @@ std::vector<Detection> YOLODetector::applyNMS(
       
       boxes.push_back(box);
       confidences.push_back(det.getConfidence());
-      classIds.push_back(det.getClassId());
     }
     
     if (boxes.empty()) {
@@ -576,39 +458,18 @@ std::vector<Detection> YOLODetector::applyNMS(
       filteredDetections.push_back(detections[idx]);
     }
     
+    return filteredDetections;
+    
   } catch (const std::exception& e) {
     std::cerr << "[YOLODetector] NMS failed: " << e.what() << std::endl;
     // Return empty if NMS fails to avoid false positives
     return filteredDetections;
   }
 #else
-  // Fallback: simple IoU-based filtering to remove overlaps
-  for (size_t i = 0; i < detections.size(); ++i) {
-    bool shouldKeep = true;
-    
-    // Check if this detection overlaps significantly with a higher-confidence one
-    for (size_t j = 0; j < detections.size(); ++j) {
-      if (i == j) continue;
-      
-      if (detections[j].getConfidence() > detections[i].getConfidence()) {
-        float iou = detections[i].getBoundingBox().computeIoU(
-            detections[j].getBoundingBox());
-        
-        // If IoU is high, remove the lower-confidence detection
-        if (iou > nmsThreshold_) {
-          shouldKeep = false;
-          break;
-        }
-      }
-    }
-    
-    if (shouldKeep && detections[i].getConfidence() >= confidenceThreshold_) {
-      filteredDetections.push_back(detections[i]);
-    }
-  }
-#endif
-  
+  // OpenCV is required for NMS
+  std::cerr << "[YOLODetector] OpenCV required for NMS - returning empty detections" << std::endl;
   return filteredDetections;
+#endif
 }
 
 }  // namespace detection
