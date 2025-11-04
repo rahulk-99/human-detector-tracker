@@ -40,6 +40,10 @@ utils::Position3D CoordinateTransformer::pixelToCameraFrame(
     float depth,
     int imageWidth,
     int imageHeight) const {
+  // Suppress unused parameter warnings (parameters kept for interface consistency)
+  (void)imageWidth;
+  (void)imageHeight;
+  
   // Pinhole camera model:
   // X = (u - cx) * Z / fx
   // Y = (v - cy) * Z / fy

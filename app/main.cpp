@@ -16,33 +16,6 @@
 
 using namespace perception;
 
-/**
- * @brief Print perception output to console
- */
-void printOutput(const core::PerceptionOutput& output) {
-  std::cout << "\n========================================" << std::endl;
-  std::cout << "Frame #" << output.frameCount
-            << " | Timestamp: " << output.timestamp << "s" << std::endl;
-  std::cout << "Active Tracks: " << output.tracks.size() << std::endl;
-  
-  for (const auto& track : output.tracks) {
-    const auto& pos = track.getPosition();
-    const auto& vel = track.getVelocity();
-    
-    std::cout << "  Track ID " << track.getId() << ":" << std::endl;
-    std::cout << "    Position (m): ("
-              << pos.getX() << ", "
-              << pos.getY() << ", "
-              << pos.getZ() << ")" << std::endl;
-    std::cout << "    Velocity (m/s): ("
-              << vel.getX() << ", "
-              << vel.getY() << ", "
-              << vel.getZ() << ")" << std::endl;
-    std::cout << "    Hit Count: " << track.getHitCount()
-              << " | Age: " << track.getAge() << std::endl;
-  }
-  std::cout << "========================================\n" << std::endl;
-}
 
 int main(int argc, char* argv[]) {
   std::cout << "================================================" << std::endl;

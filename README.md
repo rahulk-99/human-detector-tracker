@@ -6,259 +6,116 @@
 
 The **Human Perception System (HPS)** is a modular C++17 robotics perception module designed for Acme Robotics. It detects and tracks humans (N≥1) in real-time using monocular camera input and outputs their 3D positions directly in the robot's reference frame.
 
-## Purpose
+![Detection and Tracking Demo](./docs/detection_tracking.gif)
 
-The purpose of the Human Perception System (HPS) is to provide a robust and modular real-time solution for detecting and tracking humans using a monocular camera, enabling robots at Acme Robotics to accurately perceive the presence and location of people in their environment. By outputting  positions of humans, the system enhances downstream navigation and safety functions, with particular emphasis on reliability, extensibility, and integration readiness for practical robotics deployments.
-
-## About Us
-
-### Venkata Madhav Tadavarthi
-
-My name is Venkata Madhav, I am currently pursuing my Masters in Robotics at University of Maryland, College Park. I am passionate about robotics, specifically underwater robots. My research interests include perception, planning and controls. I am excited to contribute to this project!
-
-### Rahul Kumar
-
-My name is Rahul Kumar. I am a Robotics Master's student at the University of Maryland, College Park, with interest in Robot Learning, Computer Vision, and Autonomous Systems. This project covers multiple domains, which makes it exciting to work on.
-
-
-## Authors
-
-### Phase 2
-
-- Rahul Kumar (Driver)
-- Venkata Madhav Tadavarthi (Navigator)
-
-### Phase 1
-
-- Venkata Madhav Tadavarthi (Driver)
-- Rahul Kumar (Navigator)
-
-### Phase 0
-
-- Rahul Kumar (Driver)
-- Venkata Madhav Tadavarthi (Navigator)
-
-### Main Features
-
-- **Human Detection**: YOLOv8-based detection with OpenCV DNN, configurable confidence thresholds, and NMS
-- **Multi-Object Tracking**: Kalman Filter-based tracking with IoU data association and full covariance propagation
-- **Coordinate Transformation**: Complete pixel-to-robot frame transformation with pinhole camera model
-- **Video Processing**: Full video file processing with frame-by-frame detection and tracking
-- **Visualization**: Real-time OpenCV-based visualization with bounding boxes, track IDs, and frame information
-- **Real-Time Processing**: Designed for 30 FPS operation without ROS dependency
-- **Depth Estimation**: Monocular depth estimation using bounding box height heuristic
-- **Modular Architecture**: Clean interfaces following SOLID principles and design patterns
-- **Matrix Operations**: Full Kalman filter implementation with matrix multiply, transpose, and inversion
-- **Comprehensive Testing**: 98 unit tests with 83%+ code coverage
-
-### Project Documentation
-
-**Phase 2 Video & Documentation:**
-
-- [Phase 2 Video](https://drive.google.com/drive/folders/1EyaaiMVev9sIGax7qiCHixWLD2Pylc8X?usp=sharing) - Phase 2 demonstration video
-
-- [Product Backlog (AIP Sheet)](https://docs.google.com/spreadsheets/d/1wcmKYTpv4yeAv1NeTeLlhB47EcRxOFroaWx42daGazo/edit?usp=sharing) - Agile Iterative Process tracking
-
-**Phase 1 Sprint Planning:**
-
-- Here's the link to Sprint Planning Notes & Review - [Google Docs](https://docs.google.com/document/d/1IPIIQfQ-b3CGt2YbmqxJesh1Z4LAwaoxIcWlEhEjiBU/edit?usp=sharing)
-
-**Phase 1 API Video:**
-
-- [Phase 1 API Video](https://drive.google.com/file/d/1t2W6wct0taBPDg3CrEwSaJRvRWU8mBnN/view?usp=sharing)
-
-- [Product Backlog (AIP Sheet)](https://docs.google.com/spreadsheets/d/1wcmKYTpv4yeAv1NeTeLlhB47EcRxOFroaWx42daGazo/edit?usp=sharing) - Agile Iterative Process tracking
-
-**Phase 0 Proposal & Design:**
-- [Proposal Document, QuadChart & Video](https://drive.google.com/drive/folders/15M2WV5y34R-rcf8K7gPXKGJ_NX8htvk3?usp=sharing) - Design methodology and video explanation
-- [Product Backlog (AIP Sheet)](https://docs.google.com/spreadsheets/d/1wcmKYTpv4yeAv1NeTeLlhB47EcRxOFroaWx42daGazo/edit?usp=sharing) - Agile Iterative Process tracking
+*Real-time human detection and tracking with bounding boxes, track IDs, and frame information*
 
 ## Table of Contents
 
+- [Main Features](#main-features)
+- [Quick Start](#quick-start)
 - [Architecture](#architecture)
-- [Dependencies](#dependencies)
-- [Installation](#installation)
 - [Usage](#usage)
 - [Testing](#testing)
 - [UML Diagrams](#uml-diagrams)
 - [Design Patterns](#design-patterns)
-- [Project Structure](#project-structure)
+- [Project Documentation](#project-documentation)
 - [Phase Status](#phase-status)
-- [Contributing](#contributing)
-- [License](#license)
+- [Algorithm Details](#algorithm-details)
+- [Code Quality](#code-quality)
+- [Troubleshooting](#troubleshooting)
 - [Authors](#authors)
+
+## Main Features
+
+- **Human Detection**: YOLOv8-based detection with OpenCV DNN, configurable confidence thresholds, and NMS
+- **Multi-Object Tracking**: Kalman Filter-based tracking with IoU data association and full covariance propagation
+- **Video Processing**: Full video file processing with frame-by-frame detection and tracking
+- **Visualization**: Real-time OpenCV-based visualization with bounding boxes, track IDs, and frame information
+- **Coordinate Transformation**: Complete pixel-to-robot frame transformation with pinhole camera model
+- **Depth Estimation**: Monocular depth estimation using bounding box height heuristic
+- **Modular Architecture**: Clean interfaces following SOLID principles and design patterns
+- **Comprehensive Testing**: 98 unit tests with 83%+ code coverage
+
+## Quick Start
+
+### Installation
+
+1. **Download Required Files**:
+   - Download video and model files from [Google Drive](https://drive.google.com/drive/folders/1EyaaiMVev9sIGax7qiCHixWLD2Pylc8X?usp=sharing)
+   - Place video file in `data/` directory (e.g., `data/ADL-Rundle-6-raw.mp4`)
+   - Place YOLO model in `models/` directory (e.g., `models/yolov8n.onnx`)
+
+2. **Build the Project**:
+   ```bash
+   # Clone the repository
+   git clone https://github.com/rahulk-99/human-detector-tracker.git
+   cd human-detector-tracker
+
+   # Configure and build
+   cmake -S ./ -B build/
+   cmake --build build/
+
+   # Run the application
+   ./build/app/shell-app --video data/ADL-Rundle-6-raw.mp4 models/yolov8n.onnx
+   ```
+
+### Dependencies
+
+- **C++17 compliant compiler** (GCC 7+, Clang 5+, MSVC 2017+)
+- **CMake 3.14+**
+- **OpenCV 4.8+** (tested with 4.10.0) - required for YOLO inference
+- **GoogleTest** (fetched automatically by CMake)
+- **ONNX models** (YOLOv5/YOLOv8 ONNX format recommended)
 
 ## Architecture
 
 The system is organized into four main modules:
 
-### 1. Detection Module
-- **IDetector**: Abstract interface for detection algorithms (Strategy pattern)
-- **YOLODetector**: YOLOv8 implementation for human detection
-- **Detection**: Data class for detection results
-- **BoundingBox**: 2D bounding box representation with IoU calculation
+- **Detection Module**: `IDetector` interface, `YOLODetector` implementation, `Detection` and `BoundingBox` classes
+- **Tracking Module**: `ITracker` interface, `KalmanTracker` with `KalmanFilter`, `Track` lifecycle management
+- **Core Module**: `PerceptionPipeline` (facade), `CameraModel`, `CoordinateTransformer`
+- **Utils Module**: `Position3D`, `GeometryUtils`
 
-### 2. Tracking Module
-- **ITracker**: Abstract interface for tracking algorithms (Strategy pattern)
-- **KalmanTracker**: Multi-object tracker with Kalman filters
-- **KalmanFilter**: Generic discrete-time Kalman filter implementation
-- **Track**: Track lifecycle management with state machine (TENTATIVE→CONFIRMED→LOST)
+### Implementation Highlights
 
-### 3. Core Module
-- **PerceptionPipeline**: Main facade orchestrating the entire workflow (Facade pattern)
-- **CameraModel**: Camera intrinsic and extrinsic parameters
-- **CoordinateTransformer**: Transforms from image to robot reference frame
-- **ICoordinateTransform**: Abstract interface for coordinate transformations
-
-### 4. Utils Module
-- **Position3D**: 3D vector class with geometric operations
-- **GeometryUtils**: Static utility functions for geometric calculations
-
-### Phase 1 & 2 Implementation Highlights
-
-**✅ Fully Implemented (Phase 1):**
-- Real YOLO detection with OpenCV DNN (supports ONNX & PyTorch models)
+**Phase 1**:
+- Real YOLO detection with OpenCV DNN (ONNX/PyTorch support)
 - Complete Kalman filter with matrix operations (6x6 state, full covariance)
 - Enhanced coordinate transformation with depth estimation
 - Non-maximum suppression (NMS) using IoU
-- Pixel-to-robot frame coordinate transformation
-- OpenCV integration (conditional via `HAVE_OPENCV` flag)
-- Image preprocessing (real resize, normalization, blob creation)
 
-**✅ Fully Implemented (Phase 2):**
+**Phase 2**:
 - Video file processing (`processVideo`) with OpenCV VideoCapture
 - OpenCV-based visualization with bounding boxes, track IDs, and frame information
 - Code optimization and redundancy removal (~433 lines removed)
 - Comprehensive test coverage (98 tests, 83%+ code coverage)
-- LCOV integration for code coverage analysis
 
-## Dependencies
+## Usage
 
-### Required
-- **C++17 compliant compiler** (GCC 7+, Clang 5+, MSVC 2017+)
-- **CMake 3.14+**
-- **GoogleTest** (fetched automatically by CMake)
-
-### Dependencies (Phase 1 & 2)
-- **OpenCV 4.8+** (required for YOLO inference with 3D tensor outputs - conditionally compiled with HAVE_OPENCV)
-  - **Important**: OpenCV 4.8+ is required because modern YOLOv5/YOLOv8 models use 3D tensor outputs `[1, 84, 8400]` which are not supported in older versions
-  - OpenCV 4.5.4 and earlier will fail with `shape_utils.hpp` errors when processing these models
-  - **Tested with**: OpenCV 4.10.0 (recommended)
-- **ONNX models** (YOLOv5/YOLOv8 ONNX format recommended)
-
-### Third-Party Libraries Justification
-
-1. **OpenCV 4.8+** (tested with 4.10.0): Industry-standard computer vision library
-   - Camera interface and image I/O
-   - DNN module for YOLO inference with 3D tensor support
-   - Camera calibration and coordinate transformations
-   - **Installation**: Can be installed system-wide via package manager or built from source
-   
-2. **YOLOv8**: State-of-the-art object detector (AGPL-3.0 license)
-   - Pre-trained models available (no training required)
-   - Free for academic/educational use
-   - High accuracy and real-time performance
-
-## Installation
-
-### Download Required Files
-
-Before building, download the required video and model files:
-
-1. **Download from Google Drive**: [Phase 2 data & yolo model](https://drive.google.com/drive/folders/1EyaaiMVev9sIGax7qiCHixWLD2Pylc8X?usp=sharing)
-
-2. **Place files in correct directories**:
-   ```bash
-   # Place video file in data/ directory
-   # Example: data/ADL-Rundle-6-raw.mp4
-   
-   # Place YOLO model (.onnx file) in models/ directory
-   # Example: models/yolov8n.onnx
-   ```
-
-3. **Verify file structure**:
-   ```bash
-   ls data/*.mp4      # Should show your video file
-   ls models/*.onnx  # Should show your model file
-   ```
-
-### Standard Build
+### Process Video File
 
 ```bash
-# Clone the repository
-git clone https://github.com/rahulk-99/human-detector-tracker.git
-cd human-detector-tracker
+./build/app/shell-app --video data/video.mp4 models/yolov8n.onnx
+```
 
-# Verify OpenCV version (must be 4.8+, tested with 4.10.0)
-pkg-config --modversion opencv4
-# If < 4.8, see Troubleshooting section for upgrade instructions
-# For system-wide installation, ensure OpenCV is in /usr/local or /usr
+### Enable Visualization
 
-# Configure the project
-cmake -S ./ -B build/
+The visualization is enabled by default during video processing. It displays:
+- Bounding boxes for detections
+- Track IDs and states
+- Frame information (FPS, frame count, track count)
 
-# If using custom OpenCV installation, specify path:
-# cmake -D OpenCV_DIR=$HOME/opencv_install/lib/cmake/opencv4 -S ./ -B build/
+## Testing
 
-# Build the project
-cmake --build build/
+### Run All Tests
 
-# Run the main application
-./build/app/shell-app --video data/ADL-Rundle-6-raw.mp4 models/yolov8n.onnx
-
-# Run unit tests
+```bash
 cd build/
-ctest
-# or
-ctest --test-dir build/
+ctest --verbose
 ```
 
-### Run Static Analysis with cppcheck
-
-```bash
-# Run cppcheck for static code analysis
-cppcheck --enable=all --error-exitcode=1 --std=c++17 \
-  --suppress=unusedFunction \
-  --suppress=missingInclude \
-  -I include/ \
-  $(find . -name "*.cpp" | grep -v "/build/")
-```
-
-**Note**: Static analysis warnings suppressed for legacy compatibility.
-
-### Generate Documentation
-
-```bash
-# Build Doxygen documentation
-cmake --build build/ --target docs
-
-# Open documentation
-open docs/html/index.html
-```
-
-### Video Processing Example (Phase 2)
-
-Process video files with visualization:
-
-![Detection and Tracking Demo](./docs/detection_tracking.gif)
-
-*Human detection and tracking visualization showing bounding boxes and track IDs*
-
-
-
-### Camera Calibration
-
-For accurate 3D position estimation, calibrate your camera:
-
-```bash
-# Use OpenCV calibration tools or ROS camera_calibration
-# Save calibration to YAML file
-# Load in code:
-camera.loadCalibration("config/camera_calibration.yaml");
-```
-
-
-### Run Specific Test
+### Run Specific Test Suite
 
 ```bash
 ./build/test/cpp-test --gtest_filter=BoundingBoxTest.*
@@ -266,22 +123,11 @@ camera.loadCalibration("config/camera_calibration.yaml");
 
 ### Test Coverage
 
-The project achieves **83%+ code coverage** with 98 comprehensive tests. Current test suites:
-
-- **BoundingBox Tests**: IoU calculation, area computation, zero area edge cases
-- **Detection Tests**: Validity checks, confidence thresholds, setters
-- **YOLODetector Tests**: Initialization, mock detections, error handling
-- **Track Tests**: State transitions, update logic, prediction, getters
-- **KalmanFilter Tests**: Prediction, update cycles, error handling
-- **KalmanTracker Tests**: Data association, track management, reset
-- **Coordinate Transformation Tests**: Image→Robot frame conversion
-- **PerceptionPipeline Tests**: End-to-end integration, video processing, visualization
-- **GeometryUtils Tests**: Depth estimation, rotation, translation
-- **CameraModel Tests**: Calibration, pose, intrinsics
-- **Video Processing Tests**: Frame extraction, timestamp calculation, results collection
-- **Visualization Tests**: Bounding box drawing, track ID labels, frame display
-- **Error Handling Tests**: Invalid inputs, edge cases, exception handling
-
+The project achieves **83%+ code coverage** with 98 comprehensive tests covering:
+- Detection, tracking, and coordinate transformation
+- Video processing and visualization
+- Error handling and edge cases
+- All public methods and interfaces
 
 ## UML Diagrams
 
@@ -309,7 +155,7 @@ See: [`UML/revised_phase2/activity_diagram_revised.pdf`](./UML/revised_phase2/ac
 
 For reference, Phase 1 diagrams are available in [`UML/revised_phase1/`](./UML/revised_phase1/).
 
-### Generate UML Diagrams
+### Generate Diagrams
 
 ```bash
 # Install PlantUML
@@ -324,212 +170,50 @@ convert UML/revised_phase2/*.png UML/revised_phase2/*.pdf
 
 ## Design Patterns
 
-The codebase demonstrates several design patterns:
+- **Strategy Pattern**: `IDetector`, `ITracker`, `ICoordinateTransform` interfaces
+- **Facade Pattern**: `PerceptionPipeline` as single entry point
+- **RAII Pattern**: Smart pointers for automatic memory management
+- **Pimpl Idiom**: `YOLODetector::Impl` for implementation hiding
 
-1. **Strategy Pattern**
-   - `IDetector`, `ITracker`, `ICoordinateTransform` interfaces
-   - Allows swapping detection/tracking algorithms at runtime
+## Project Documentation
 
-2. **Facade Pattern**
-   - `PerceptionPipeline` simplifies complex subsystem interactions
-   - Single entry point for perception functionality
+**Phase 2**:
+- [Phase 2 Video & Documentation](https://drive.google.com/drive/folders/1EyaaiMVev9sIGax7qiCHixWLD2Pylc8X?usp=sharing)
+- [Product Backlog (AIP Sheet)](https://docs.google.com/spreadsheets/d/1wcmKYTpv4yeAv1NeTeLlhB47EcRxOFroaWx42daGazo/edit?usp=sharing)
 
-3. **Factory Pattern** (Phase 1 & 2)
-   - Detector and tracker factory classes for object creation
+**Phase 1**:
+- [Phase 1 API Video](https://drive.google.com/file/d/1t2W6wct0taBPDg3CrEwSaJRvRWU8mBnN/view?usp=sharing)
+- [Sprint Planning Notes](https://docs.google.com/document/d/1IPIIQfQ-b3CGt2YbmqxJesh1Z4LAwaoxIcWlEhEjiBU/edit?usp=sharing)
 
-4. **RAII Pattern**
-   - Resource management through constructors/destructors
-   - Smart pointers for automatic memory management
+**Phase 0**:
+- [Proposal Document, QuadChart & Video](https://drive.google.com/drive/folders/15M2WV5y34R-rcf8K7gPXKGJ_NX8htvk3?usp=sharing)
 
-5. **Pimpl Idiom**
-   - `YOLODetector::Impl` hides implementation details
-   - Reduces compilation dependencies
+## Phase Status
 
-## Project Structure
+### Phase 0 ✅ | Phase 1 ✅ | Phase 2 ✅
 
-```
-phase0/
-├── app/                          # Main application
-│   ├── main.cpp                  # Demo application
-│   └── CMakeLists.txt
-├── include/                      # Public headers
-│   └── perception/
-│       ├── detection/            # Detection module
-│       │   ├── IDetector.hpp
-│       │   ├── YOLODetector.hpp
-│       │   ├── Detection.hpp
-│       │   └── BoundingBox.hpp
-│       ├── tracking/             # Tracking module
-│       │   ├── ITracker.hpp
-│       │   ├── KalmanTracker.hpp
-│       │   ├── KalmanFilter.hpp
-│       │   └── Track.hpp
-│       ├── core/                 # Core pipeline
-│       │   ├── PerceptionPipeline.hpp
-│       │   ├── CameraModel.hpp
-│       │   ├── CoordinateTransformer.hpp
-│       │   └── ICoordinateTransform.hpp
-│       └── utils/                # Utilities
-│           ├── Position3D.hpp
-│           └── GeometryUtils.hpp
-├── libs/                         # Library implementations
-│   └── perception/
-│       ├── detection/            # Detection sources
-│       ├── tracking/             # Tracking sources
-│       ├── core/                 # Core sources
-│       ├── utils/                # Utils sources
-│       └── CMakeLists.txt
-├── test/                         # Unit tests
-│   ├── perception_test.cpp       # Comprehensive test suite
-│   ├── test.cpp                  # Legacy tests
-│   ├── main.cpp                  # Test main
-│   └── CMakeLists.txt
-├── docs/                         # Documentation
-│   ├── uml/                      # UML diagrams (PlantUML)
-│   │   ├── class_diagram.puml
-│   │   ├── sequence_diagram.puml
-│   │   └── activity_diagram.puml
-│   └── html/                     # Generated Doxygen docs
-├── cmake-modules/                # CMake utilities
-│   └── CodeCoverage.cmake
-├── scripts/                      # Helper scripts
-│   └── config-clangd.bash
-├── CMakeLists.txt                # Main CMake config
-├── README.md                     # This file
-└── LICENSE                       # MIT License
-```
+**Phase 0**: Complete class structure, interfaces, stub implementations, comprehensive test structure
 
-## Phase Status (Phase 0, 1 & 2)
+**Phase 1**: Real YOLO implementation, full Kalman filter, coordinate transformation, OpenCV integration, CI/CD pipeline
 
-### Phase 0 Completed ✅
-
-- [x] Complete class structure with interfaces
-- [x] All header files with Doxygen documentation
-- [x] Stub implementations (compiles and links)
-- [x] Comprehensive unit test structure
-- [x] CMake build system with dependencies
-- [x] UML diagrams (class, sequence, activity)
-- [x] Design patterns implementation
-- [x] Google C++ Style Guide compliance
-- [x] Main demo application
-- [x] README with developer documentation
-
-### Phase 1 Completed ✅
-
-- [x] **Real YOLO Implementation**: OpenCV DNN integration with ONNX/PyTorch support
-- [x] **Full Kalman Filter**: Complete matrix operations (multiply, transpose, inverse)
-- [x] **Enhanced KalmanTracker**: Integrated real Kalman filters with proper state prediction
-- [x] **Coordinate Transformation**: Complete pixel-to-robot frame transformation
-- [x] **Image Preprocessing**: Real resize, normalization, and blob creation
-- [x] **NMS Algorithm**: Complete IoU-based non-maximum suppression
-- [x] **OpenCV Integration**: CMake conditional compilation with HAVE_OPENCV flag
-- [x] **Revised UML Diagrams**: Updated to reflect real implementations
-- [x] **CI/CD Pipeline**: GitHub Actions and CodeCov integration
-
-### Phase 1 Tasks (Completed)
-
-- [x] Integrate OpenCV for image I/O (conditional via HAVE_OPENCV flag)
-- [x] Implement actual YOLO model loading and inference
-- [x] Complete Kalman Filter matrix operations
-- [x] Real-world testing structure in place
-- [x] GitHub CI/CD pipeline setup
-- [x] CodeCov integration
-
-### Phase 2 Completed ✅
-
-- [x] **Video File Processing**: Complete `processVideo()` implementation with OpenCV VideoCapture
-- [x] **Visualization Module**: OpenCV-based visualization with bounding boxes, track IDs, and frame info
-- [x] **Code Optimization**: Removed redundant code paths and unused methods (~433 lines removed)
-- [x] **Test Coverage**: Expanded to 98 tests covering all public methods and edge cases
-- [x] **LCOV Integration**: Added exclusion markers for untestable OpenCV fallback paths
-- [x] **Code Quality**: Improved codebase maintainability and reduced complexity
-
-### Phase 2 Tasks (Remaining - Optional)
-
-- [ ] Implement camera capture (`processCamera`) - removed as video-only application
-- [ ] Handle occlusion scenarios (optional)
-- [ ] Multiple camera support
-- [ ] Advanced data association (Hungarian algorithm)
-- [ ] Track re-identification after occlusion
-- [ ] Performance benchmarking and profiling
-- [ ] Integration with robot navigation stack
-
-## Code Quality
-
-### Style Guide
-
-This project follows the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html):
-
-- Classes use CamelCase
-- Functions use camelCase
-- Member variables use trailing underscore: `variable_`
-- Constants use kConstantName
-- Namespaces: lowercase
-- File names: lowercase with underscores
-
-### Static Analysis
-
-Run cppcheck before committing:
-
-```bash
-cppcheck --enable=all --std=c++17 --suppress=missingIncludeSystem \
-  --inline-suppr --quiet include/ libs/ app/ test/
-```
-
-### Compiler Warnings
-
-The project builds with strict warnings:
-
-```bash
--Wall -Wextra -Wpedantic
-```
+**Phase 2**: Video processing, visualization, code optimization, expanded test coverage, LCOV integration
 
 ## Algorithm Details
 
 ### Depth Estimation
 
-For monocular camera, depth is estimated using bounding box height:
-
+Monocular depth estimation using bounding box height:
 ```
 depth = (focal_length * average_human_height) / bbox_height_pixels
 ```
 
-Assumptions:
-- Average human height: 1.7 meters (configurable)
-- Camera calibrated with known focal length
-- Person standing upright
-
-### Kalman Filter (Phase 1 & 2 Implementation)
+### Kalman Filter
 
 State vector: `[x, y, z, vx, vy, vz]` (position and velocity in 3D)
 
-Motion model: Constant velocity with full matrix operations
-```
-x_k = F * x_{k-1} + w_k
-P_k = F * P_{k-1} * F^T + Q
-```
-
-Where:
-- `F` = State transition matrix with `dt` terms
-- `P` = Covariance matrix (full 6x6 tracking)
-- `Q` = Process noise covariance
-- `R` = Measurement noise covariance
-
-Measurement: `[x, y, z]` (position only)
-
-Update equations:
-```
-Innovation: y = z - H * x
-Gain: K = P * H^T * (H*P*H^T + R)^-1
-Update: x = x + K*y, P = (I - K*H)*P
-```
-
-**Phase 1 & 2 Implementation**: Complete matrix operations including:
-- Matrix multiplication for state prediction
-- Matrix inversion (Gauss-Jordan elimination)
-- Covariance propagation
-- Innovation computation
-- Kalman gain calculation
+- Motion model: Constant velocity with full matrix operations
+- Complete matrix operations: multiply, transpose, inverse (Gauss-Jordan)
+- Full covariance propagation (6x6 matrix)
 
 ### Data Association
 
@@ -537,85 +221,47 @@ Uses IoU (Intersection over Union) matching:
 - Compute IoU between predicted track boxes and detected boxes
 - Match pairs with IoU > threshold (default 0.3)
 - Greedy assignment (currently implemented)
-- Hungarian algorithm (optional future enhancement)
 
-**Phase 1 & 2**: Real NMS implementation using OpenCV `cv::dnn::NMSBoxes` with full video processing and visualization support
+## Code Quality
 
-## Contributing
+### Style Guide
 
-### Pair Programming Workflow
+Follows [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html):
+- Classes: CamelCase
+- Functions: camelCase
+- Member variables: trailing underscore (`variable_`)
+- Constants: kConstantName
 
-This project uses Test-Driven Development (TDD) and pair programming:
+### Static Analysis
 
-1. **Driver**: Writes code
-2. **Navigator**: Reviews, suggests improvements
-3. Switch roles each phase. Phase 2 completed with mixed roles for each individual
-
-### Commit Message Format
-
+```bash
+cppcheck --enable=all --error-exitcode=1 --std=c++14 \
+  --suppress=syntaxError:libs/perception/detection/YOLODetector.cpp:481 \
+  --suppress=unusedFunction:test/error_handling_test.cpp:71 \
+  -I include/ $(find . -name "*.cpp" | grep -v "/build/")
 ```
-[module] Brief description
 
-- Detailed point 1
-- Detailed point 2
-
-Fixes #issue_number
-```
+**Note**: The syntax error in `YOLODetector.cpp:481` is a false positive from cppcheck's preprocessor parsing. The `SetUp()` function in `error_handling_test.cpp:71` is used by GoogleTest framework automatically.
 
 ## Troubleshooting
 
-### Build Issues
+### OpenCV Version Issues
 
-**Problem**: CMake can't find OpenCV or wrong version
+If CMake can't find OpenCV or version is < 4.8:
 ```bash
-# Check current OpenCV version
+# Check current version
 pkg-config --modversion opencv4
 
-# If version is < 4.8, you need to upgrade:
-# Option 1: Build from source and install system-wide (recommended)
-# Download OpenCV 4.10.0 source (or latest 4.8+):
-# wget https://github.com/opencv/opencv/archive/refs/tags/4.10.0.zip
-# unzip opencv-4.10.0.zip
+# Build from source (recommended)
+wget https://github.com/opencv/opencv/archive/refs/tags/4.10.0.zip
+unzip opencv-4.10.0.zip
 cd opencv-4.10.0 && mkdir build && cd build
 cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local ..
 make -j$(nproc) && sudo make install
-sudo ldconfig  # Update system library cache
-
-# Option 2: Install to custom location
-cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=$HOME/opencv_install ..
-make -j$(nproc) && make install
-# Then configure CMake with the custom OpenCV:
-cmake -D OpenCV_DIR=$HOME/opencv_install/lib/cmake/opencv4 -S . -B build/
+sudo ldconfig
 ```
 
-**Problem**: OpenCV version is 4.5.4 or earlier, but model fails with `shape_utils.hpp` error
-```bash
-# This error occurs because OpenCV < 4.8 cannot handle 3D tensor outputs
-# Solution: Upgrade to OpenCV 4.8+ (see above)
-```
-
-**Problem**: C++17 features not available
-```bash
-# Solution: Update compiler
-sudo apt-get install gcc-9 g++-9
-export CXX=g++-9
-```
-
-### Runtime Issues
-
-**Problem**: YOLO model not found
-```bash
-# Solution: Download YOLOv8 model
-mkdir -p models
-wget https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.onnx \
-  -O models/yolov8n.onnx
-```
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Authors (Group 2 - Mid-term)
+## Authors
 
 **Acme Robotics Development Team**
 - Rahul Kumar
@@ -623,14 +269,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Course**: ENPM700 - Software Development for Robotics  
 **Institution**: University of Maryland  
-**Semester**: Fall 2025  
+**Semester**: Fall 2025
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
 - YOLOv8 by [Ultralytics](https://github.com/ultralytics/ultralytics)
 - GoogleTest framework
 - Template structure from [cpp-boilerplate-v2](https://github.com/TommyChangUMD/cpp-boilerplate-v2)
-- Project repository: [human-detector-tracker](https://github.com/rahulk-99/human-detector-tracker)
 
 ## References
 
@@ -638,10 +287,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 2. Kalman, R. E. "A New Approach to Linear Filtering and Prediction Problems" (1960)
 3. Redmon, J., et al. "You Only Look Once: Unified, Real-Time Object Detection"
 4. OpenCV Documentation: https://docs.opencv.org/
-5. Google C++ Style Guide: https://google.github.io/styleguide/cppguide.html
 
 ---
 
 **Project Status**: Phase 0 Complete ✅ | Phase 1 Complete ✅ | Phase 2 Complete ✅
 
-For questions or issues, please open a GitHub issue or contact the authors.
+For questions or issues, please open a [GitHub issue](https://github.com/rahulk-99/human-detector-tracker/issues).
