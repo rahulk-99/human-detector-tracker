@@ -146,6 +146,18 @@ TEST(TrackTest, Setters) {
   EXPECT_FLOAT_EQ(retrievedPos.getX(), 10.0f);
   EXPECT_FLOAT_EQ(retrievedPos.getY(), 20.0f);
   EXPECT_FLOAT_EQ(retrievedPos.getZ(), 30.0f);
+  
+  // Test getBoundingBox
+  const auto& retrievedBbox = track.getBoundingBox();
+  EXPECT_FLOAT_EQ(retrievedBbox.getX(), bbox.getX());
+  EXPECT_FLOAT_EQ(retrievedBbox.getY(), bbox.getY());
+  
+  // Test getTimestamp
+  EXPECT_DOUBLE_EQ(track.getTimestamp(), 0.0);
+  
+  // Update track and check timestamp changes
+  track.update(bbox, newPos, 1.5);
+  EXPECT_DOUBLE_EQ(track.getTimestamp(), 1.5);
 }
 
 // ============================================================================

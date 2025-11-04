@@ -61,6 +61,28 @@ TEST(BoundingBoxTest, IoUCalculation) {
   EXPECT_FLOAT_EQ(bbox1.computeIoU(bbox3), 0.0f);  // No overlap
 }
 
+TEST(BoundingBoxTest, IoUWithZeroAreaBox) {
+  // Test IoU with zero area box (unionArea <= 0 edge case)
+  detection::BoundingBox zeroBox(100.0f, 100.0f, 0.0f, 0.0f);
+  detection::BoundingBox normalBox(100.0f, 100.0f, 50.0f, 50.0f);
+  
+  // Zero area box should return 0 IoU
+  EXPECT_FLOAT_EQ(zeroBox.computeIoU(normalBox), 0.0f);
+  EXPECT_FLOAT_EQ(normalBox.computeIoU(zeroBox), 0.0f);
+  
+  // Two zero area boxes
+  detection::BoundingBox zeroBox2(200.0f, 200.0f, 0.0f, 0.0f);
+  EXPECT_FLOAT_EQ(zeroBox.computeIoU(zeroBox2), 0.0f);
+}
+
+TEST(BoundingBoxTest, ZeroAreaBox) {
+  detection::BoundingBox zeroBox(100.0f, 200.0f, 0.0f, 0.0f);
+  
+  EXPECT_FLOAT_EQ(zeroBox.getArea(), 0.0f);
+  EXPECT_FLOAT_EQ(zeroBox.getWidth(), 0.0f);
+  EXPECT_FLOAT_EQ(zeroBox.getHeight(), 0.0f);
+}
+
 TEST(BoundingBoxTest, Set) {
   detection::BoundingBox box(100.0f, 200.0f, 50.0f, 60.0f);
   
@@ -98,6 +120,25 @@ TEST(DetectionTest, ValidityCheck) {
   
   EXPECT_TRUE(det.isValid(0.5f));
   EXPECT_FALSE(det.isValid(0.9f));
+}
+
+TEST(DetectionTest, Setters) {
+  detection::BoundingBox bbox1(100.0f, 200.0f, 50.0f, 100.0f);
+  detection::Detection det(bbox1, 0.85f, 0, "person");
+  
+  // Test setBoundingBox
+  detection::BoundingBox bbox2(200.0f, 300.0f, 60.0f, 110.0f);
+  det.setBoundingBox(bbox2);
+  EXPECT_FLOAT_EQ(det.getBoundingBox().getX(), 200.0f);
+  
+  // Test setConfidence
+  det.setConfidence(0.95f);
+  EXPECT_FLOAT_EQ(det.getConfidence(), 0.95f);
+  
+  // Test setClass
+  det.setClass(1, "human");
+  EXPECT_EQ(det.getClassId(), 1);
+  EXPECT_EQ(det.getClassName(), "human");
 }
 
 // ============================================================================
@@ -556,7 +597,12 @@ TEST(PerceptionPipelineTest, Getters) {
   auto retrievedTransformer = pipeline.getTransformer();
   EXPECT_EQ(retrievedTransformer, transformer);
   
-  // Test getCameraModel - removed getter, test pipeline instead
+  // Test getCameraModel
+  const auto& retrievedCamera = pipeline.getCameraModel();
+  EXPECT_EQ(retrievedCamera.getFocalLengthX(), camera.getFocalLengthX());
+  EXPECT_EQ(retrievedCamera.getFocalLengthY(), camera.getFocalLengthY());
+  
+  // Test getFrameCount
   EXPECT_EQ(pipeline.getFrameCount(), 0);
 }
 
