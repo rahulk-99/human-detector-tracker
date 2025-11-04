@@ -124,8 +124,10 @@ bool YOLODetector::initialize() {
     return true;  // Allow mock mode
   }
 #else
+  // LCOV_EXCL_START - OpenCV not available path, untestable when HAVE_OPENCV is defined
   std::cout << "[YOLODetector] OpenCV not available - using mock implementation" << std::endl;
   return true;  // Fallback to mock for Phase 0
+  // LCOV_EXCL_STOP
 #endif
 }
 
@@ -466,9 +468,11 @@ std::vector<Detection> YOLODetector::applyNMS(
     return filteredDetections;
   }
 #else
+  // LCOV_EXCL_START - OpenCV not available path, untestable when HAVE_OPENCV is defined
   // OpenCV is required for NMS
   std::cerr << "[YOLODetector] OpenCV required for NMS - returning empty detections" << std::endl;
   return filteredDetections;
+  // LCOV_EXCL_STOP
 #endif
 }
 

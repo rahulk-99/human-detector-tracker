@@ -145,7 +145,9 @@ std::vector<PerceptionOutput> PerceptionPipeline::processVideo(
     std::cerr << "[PerceptionPipeline] Error processing video: " << e.what() << std::endl;
   }
 #else
+  // LCOV_EXCL_START - OpenCV not available path, untestable when HAVE_OPENCV is defined
   std::cerr << "[PerceptionPipeline] OpenCV not available - cannot process video" << std::endl;
+  // LCOV_EXCL_STOP
 #endif
 
   return results;
@@ -323,7 +325,9 @@ void PerceptionPipeline::visualizeFrame(const unsigned char* frame,
     std::cerr << "[PerceptionPipeline] Visualization error: " << e.what() << std::endl;
   }
 #else
+  // LCOV_EXCL_START - OpenCV not available path, untestable when HAVE_OPENCV is defined
   std::cout << "[PerceptionPipeline] Visualization requested but OpenCV not available" << std::endl;
+  // LCOV_EXCL_STOP
 #endif
 }
 
