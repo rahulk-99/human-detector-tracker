@@ -97,20 +97,6 @@ class KalmanTracker : public ITracker {
    */
   int getTrackCount() const override;
 
-  /**
-   * @brief Set minimum hits required to confirm a track
-   * 
-   * @param minHits Minimum detection count
-   */
-  void setMinHits(int minHits);
-
-  /**
-   * @brief Set IoU threshold for data association
-   * 
-   * @param threshold IoU threshold [0.0, 1.0]
-   */
-  void setIouThreshold(float threshold);
-
  private:
   /**
    * @brief Predict all track states for current timestamp

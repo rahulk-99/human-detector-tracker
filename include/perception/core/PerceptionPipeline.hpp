@@ -92,18 +92,6 @@ class PerceptionPipeline {
   std::vector<PerceptionOutput> processVideo(const std::string& videoPath);
 
   /**
-   * @brief Process live camera stream
-   * 
-   * Captures and processes frames from camera in real-time until stopped.
-   * 
-   * @param cameraId Camera device ID (default 0)
-   * @param maxFrames Maximum frames to process (0 = unlimited)
-   * @return std::vector<PerceptionOutput> Results for processed frames
-   */
-  std::vector<PerceptionOutput> processCamera(int cameraId = 0,
-                                             int maxFrames = 0);
-
-  /**
    * @brief Reset pipeline state (clears all tracks)
    */
   void reset();

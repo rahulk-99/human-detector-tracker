@@ -8,7 +8,6 @@
 
 #include "perception/core/PerceptionPipeline.hpp"
 #include <iostream>
-#include <chrono>
 
 #ifdef HAVE_OPENCV
 #include <opencv2/opencv.hpp>
@@ -50,17 +49,10 @@ PerceptionOutput PerceptionPipeline::processFrame(const unsigned char* frame,
     std::vector<detection::Detection> detections =
         detector_->detect(frame, width, height, channels);
 
-    std::cout << "[Frame " << frameCount_ << "] Detected " << detections.size()
-              << " humans" << std::endl;
-
     // Step 2: Transform detections to 3D positions in robot frame
     for (auto& det : detections) {
       // Get 3D position for this detection
-      utils::Position3D pos3D = transformer_->imageToRobotFrame(
-          det.getBoundingBox(), width, height);
-      
-      std::cout << "  Detection at: (" << pos3D.getX() << ", " << pos3D.getY()
-                << ", " << pos3D.getZ() << ") m" << std::endl;
+      transformer_->imageToRobotFrame(det.getBoundingBox(), width, height);
     }
 
     // Step 3: Update tracker with detections
@@ -68,14 +60,6 @@ PerceptionOutput PerceptionPipeline::processFrame(const unsigned char* frame,
 
     // Step 4: Get active tracks
     output.tracks = tracker_->getActiveTracks();
-    std::cout << "  Active tracks: " << output.tracks.size() << std::endl;
-
-    for (const auto& track : output.tracks) {
-      const auto& pos = track.getPosition();
-      std::cout << "    Track " << track.getId() << ": (" << pos.getX()
-                << ", " << pos.getY() << ", " << pos.getZ() << ") m"
-                << std::endl;
-    }
 
     // Store detections for visualization
     output.detections = detections;
@@ -162,100 +146,6 @@ std::vector<PerceptionOutput> PerceptionPipeline::processVideo(
   }
 #else
   std::cerr << "[PerceptionPipeline] OpenCV not available - cannot process video" << std::endl;
-#endif
-
-  return results;
-}
-
-std::vector<PerceptionOutput> PerceptionPipeline::processCamera(
-    int cameraId,
-    int maxFrames) {
-  std::vector<PerceptionOutput> results;
-  
-  std::cout << "[PerceptionPipeline] Processing camera " << cameraId
-            << std::endl;
-
-#ifdef HAVE_OPENCV
-  try {
-    // Open camera
-    cv::VideoCapture cap(cameraId);
-    if (!cap.isOpened()) {
-      std::cerr << "[PerceptionPipeline] Error: Could not open camera " << cameraId << std::endl;
-      return results;
-    }
-
-    // Get camera properties
-    int width = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH));
-    int height = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
-    double fps = cap.get(cv::CAP_PROP_FPS);
-    if (fps <= 0) fps = 30.0;  // Default FPS if not available
-
-    std::cout << "[PerceptionPipeline] Camera opened: " << width << "x" << height 
-              << " @ " << fps << " FPS" << std::endl;
-    std::cout << "[PerceptionPipeline] Press 'q' to quit, 'ESC' to exit" << std::endl;
-
-    // Enable visualization for camera stream
-    bool originalVizState = visualizationEnabled_;
-    visualizationEnabled_ = true;
-
-    cv::Mat frame;
-    auto startTime = std::chrono::steady_clock::now();
-    int frameNumber = 0;
-
-    while (true) {
-      // Read frame
-      cap >> frame;
-      if (frame.empty()) {
-        std::cerr << "[PerceptionPipeline] Warning: Empty frame captured" << std::endl;
-        break;
-      }
-
-      // Calculate timestamp
-      auto currentTime = std::chrono::steady_clock::now();
-      auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-          currentTime - startTime).count();
-      double timestamp = elapsed / 1000.0;
-
-      // Process frame
-      // Convert Mat to raw data (BGR format)
-      std::vector<unsigned char> frameData(frame.data, frame.data + frame.total() * frame.channels());
-      PerceptionOutput output = processFrame(
-          frameData.data(), frame.cols, frame.rows, frame.channels(), timestamp);
-
-      results.push_back(output);
-
-      // Display frame (handled in visualizeFrame)
-      // Check for exit key
-      char key = cv::waitKey(1) & 0xFF;
-      if (key == 'q' || key == 'Q' || key == 27) {  // 'q' or ESC
-        std::cout << "[PerceptionPipeline] User requested exit" << std::endl;
-        break;
-      }
-
-      // Check max frames limit
-      frameNumber++;
-      if (maxFrames > 0 && frameNumber >= maxFrames) {
-        std::cout << "[PerceptionPipeline] Reached max frames limit: " << maxFrames << std::endl;
-        break;
-      }
-    }
-
-    // Restore original visualization state
-    visualizationEnabled_ = originalVizState;
-
-    cap.release();
-    cv::destroyAllWindows();
-
-    std::cout << "[PerceptionPipeline] Camera processing complete. Processed " 
-              << results.size() << " frames" << std::endl;
-
-  } catch (const cv::Exception& e) {
-    std::cerr << "[PerceptionPipeline] OpenCV error: " << e.what() << std::endl;
-  } catch (const std::exception& e) {
-    std::cerr << "[PerceptionPipeline] Error processing camera: " << e.what() << std::endl;
-  }
-#else
-  std::cerr << "[PerceptionPipeline] OpenCV not available - cannot process camera" << std::endl;
 #endif
 
   return results;

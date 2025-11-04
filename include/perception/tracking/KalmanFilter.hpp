@@ -69,27 +69,6 @@ class KalmanFilter {
   std::vector<float> getState() const;
 
   /**
-   * @brief Get state covariance matrix
-   * 
-   * @return std::vector<float> Covariance matrix (flattened row-major)
-   */
-  std::vector<float> getCovariance() const;
-
-  /**
-   * @brief Set process noise covariance
-   * 
-   * @param Q Process noise covariance matrix (flattened)
-   */
-  void setProcessNoise(const std::vector<float>& Q);
-
-  /**
-   * @brief Set measurement noise covariance
-   * 
-   * @param R Measurement noise covariance matrix (flattened)
-   */
-  void setMeasurementNoise(const std::vector<float>& R);
-
-  /**
    * @brief Reset filter to initial state
    */
   void reset();

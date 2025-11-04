@@ -74,16 +74,8 @@ void CoordinateTransformer::setCameraModel(const CameraModel& cameraModel) {
   cameraModel_ = cameraModel;
 }
 
-const CameraModel& CoordinateTransformer::getCameraModel() const {
-  return cameraModel_;
-}
-
 void CoordinateTransformer::setAverageHumanHeight(float height) {
   averageHumanHeight_ = height;
-}
-
-float CoordinateTransformer::getAverageHumanHeight() const {
-  return averageHumanHeight_;
 }
 
 }  // namespace core

@@ -106,14 +106,6 @@ int KalmanTracker::getTrackCount() const {
   return count;
 }
 
-void KalmanTracker::setMinHits(int minHits) {
-  minHits_ = minHits;
-}
-
-void KalmanTracker::setIouThreshold(float threshold) {
-  iouThreshold_ = threshold;
-}
-
 void KalmanTracker::predictTracks() {
   for (auto& track : tracks_) {
     int trackId = track.getId();

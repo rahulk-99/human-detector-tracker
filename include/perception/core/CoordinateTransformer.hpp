@@ -89,25 +89,11 @@ class CoordinateTransformer : public ICoordinateTransform {
   void setCameraModel(const CameraModel& cameraModel);
 
   /**
-   * @brief Get current camera model
-   * 
-   * @return const CameraModel& Camera model reference
-   */
-  const CameraModel& getCameraModel() const;
-
-  /**
    * @brief Set average human height for depth estimation
    * 
    * @param height Average height in meters (default 1.7m)
    */
   void setAverageHumanHeight(float height);
-
-  /**
-   * @brief Get average human height used for depth estimation
-   * 
-   * @return float Height in meters
-   */
-  float getAverageHumanHeight() const;
 
  private:
   CameraModel cameraModel_;          ///< Camera parameters

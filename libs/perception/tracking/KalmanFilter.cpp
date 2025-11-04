@@ -339,40 +339,6 @@ std::vector<float> KalmanFilter::getState() const {
   return state_;
 }
 
-std::vector<float> KalmanFilter::getCovariance() const {
-  return covariance_;
-}
-
-void KalmanFilter::setProcessNoise(const std::vector<float>& Q) {
-  if (Q.size() != static_cast<size_t>(stateDim_ * stateDim_)) {
-    throw std::invalid_argument("Process noise matrix dimension mismatch");
-  }
-  
-  // Validate Q is positive semi-definite (check diagonal elements)
-  for (int i = 0; i < stateDim_; ++i) {
-    if (Q[i * stateDim_ + i] < 0.0f) {
-      throw std::invalid_argument("Process noise matrix must be positive semi-definite");
-    }
-  }
-  
-  Q_ = Q;
-}
-
-void KalmanFilter::setMeasurementNoise(const std::vector<float>& R) {
-  if (R.size() != static_cast<size_t>(measureDim_ * measureDim_)) {
-    throw std::invalid_argument("Measurement noise matrix dimension mismatch");
-  }
-  
-  // Validate R is positive definite (check diagonal elements)
-  for (int i = 0; i < measureDim_; ++i) {
-    if (R[i * measureDim_ + i] <= 0.0f) {
-      throw std::invalid_argument("Measurement noise matrix must be positive definite");
-    }
-  }
-  
-  R_ = R;
-}
-
 void KalmanFilter::reset() {
   std::fill(state_.begin(), state_.end(), 0.0f);
   std::fill(covariance_.begin(), covariance_.end(), 0.0f);

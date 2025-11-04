@@ -43,28 +43,6 @@ class GeometryUtils {
       float averageHumanHeight = 1.7f);
 
   /**
-   * @brief Compute intersection area of two bounding boxes
-   * 
-   * @param box1 First bounding box
-   * @param box2 Second bounding box
-   * @return float Intersection area in square pixels
-   */
-  static float computeIntersectionArea(
-      const detection::BoundingBox& box1,
-      const detection::BoundingBox& box2);
-
-  /**
-   * @brief Compute union area of two bounding boxes
-   * 
-   * @param box1 First bounding box
-   * @param box2 Second bounding box
-   * @return float Union area in square pixels
-   */
-  static float computeUnionArea(
-      const detection::BoundingBox& box1,
-      const detection::BoundingBox& box2);
-
-  /**
    * @brief Apply 3D rotation matrix to position
    * 
    * @param position Input position
@@ -85,32 +63,6 @@ class GeometryUtils {
   static Position3D applyTranslation(
       const Position3D& position,
       const Position3D& translation);
-
-  /**
-   * @brief Convert pixel coordinates to normalized image coordinates
-   * 
-   * Normalizes pixel coordinates to [-1, 1] range based on image dimensions.
-   * 
-   * @param pixelX Pixel X coordinate
-   * @param pixelY Pixel Y coordinate
-   * @param imageWidth Image width in pixels
-   * @param imageHeight Image height in pixels
-   * @param normX Output normalized X coordinate
-   * @param normY Output normalized Y coordinate
-   */
-  static void pixelToNormalized(float pixelX, float pixelY,
-                               int imageWidth, int imageHeight,
-                               float& normX, float& normY);
-
-  /**
-   * @brief Clamp value to range [min, max]
-   * 
-   * @param value Input value
-   * @param min Minimum bound
-   * @param max Maximum bound
-   * @return float Clamped value
-   */
-  static float clamp(float value, float min, float max);
 
  private:
   GeometryUtils() = delete;  ///< Utility class, no instantiation

@@ -50,23 +50,19 @@ int main(int argc, char* argv[]) {
   std::cout << "   Phase 1: Detection & Tracking Demo          " << std::endl;
   std::cout << "================================================\n" << std::endl;
 
-  // Parse command line arguments (video or webcam)
-  bool useVideo = false;
+  // Parse command line arguments (video only)
   std::string videoPath;
-  int cameraId = 0;
   std::string modelPath = "models/yolov8n.onnx";
   // Fixed thresholds (kept within the script)
   const float confidenceThreshold = 0.5f;
   const float nmsThreshold = 0.4f;
-  int maxFrames = 0;  // webcam mode only
 
   int argi = 1;
   if (argc > argi) {
     std::string arg1 = argv[argi];
     if (arg1 == "--help" || arg1 == "-h") {
       std::cout << "Usage:\n"
-                << "  shell-app --video <path> [model_path]\n"
-                << "  shell-app [camera_id] [model_path] [max_frames]\n" << std::endl;
+                << "  shell-app --video <path> [model_path]\n" << std::endl;
       return 0;
     }
     // Handle --video (single argument) or -- video (two arguments)
@@ -78,7 +74,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error: --video requires a path" << std::endl;
         return 1;
       }
-      useVideo = true;
       videoPath = argv[argi + 1];
       argi += 2;
     } else if (arg1 == "--") {
@@ -87,37 +82,24 @@ int main(int argc, char* argv[]) {
       std::cerr << "Usage: shell-app --video <path> [model_path]" << std::endl;
       return 1;
     } else {
-      try {
-        cameraId = std::stoi(arg1);
-        argi += 1;
-      } catch (...) {
-        useVideo = true;
-        videoPath = arg1;
-        argi += 1;
-      }
+      // Assume it's a video path
+      videoPath = arg1;
+      argi += 1;
     }
+  } else {
+    std::cerr << "Error: Video path required" << std::endl;
+    std::cerr << "Usage: shell-app --video <path> [model_path]" << std::endl;
+    return 1;
   }
   if (argc > argi) {
     modelPath = argv[argi++];
   }
-  // confidenceThreshold and nmsThreshold are fixed in code
-  if (!useVideo && argc > argi) {
-    try { maxFrames = std::stoi(argv[argi++]); }
-    catch (...) { std::cerr << "Invalid max_frames" << std::endl; return 1; }
-  }
 
   std::cout << "Configuration:" << std::endl;
-  if (useVideo) {
-    std::cout << "  Mode: Video\n  Video: " << videoPath << std::endl;
-  } else {
-    std::cout << "  Mode: Webcam\n  Camera ID: " << cameraId << std::endl;
-  }
+  std::cout << "  Mode: Video\n  Video: " << videoPath << std::endl;
   std::cout << "  Model: " << modelPath << std::endl;
   std::cout << "  Confidence: " << confidenceThreshold << std::endl;
   std::cout << "  NMS: " << nmsThreshold << std::endl;
-  if (!useVideo) {
-    std::cout << "  Max Frames: " << (maxFrames > 0 ? std::to_string(maxFrames) : std::string("Unlimited")) << std::endl;
-  }
   std::cout << std::endl;
 
   // Initialize camera model
@@ -150,14 +132,9 @@ int main(int argc, char* argv[]) {
   std::cout << "\n5. Creating perception pipeline..." << std::endl;
   core::PerceptionPipeline pipeline(detector, tracker, transformer, camera);
 
-  // Run pipeline on video or webcam
-  std::cout << "\n6. Starting " << (useVideo ? "video" : "webcam") << " stream...\n" << std::endl;
-  std::vector<core::PerceptionOutput> results;
-  if (useVideo) {
-    results = pipeline.processVideo(videoPath);
-  } else {
-    results = pipeline.processCamera(cameraId, maxFrames);
-  }
+  // Run pipeline on video
+  std::cout << "\n6. Starting video stream...\n" << std::endl;
+  std::vector<core::PerceptionOutput> results = pipeline.processVideo(videoPath);
 
   // Print summary
   std::cout << "\n================================================" << std::endl;
