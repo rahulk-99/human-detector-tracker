@@ -61,6 +61,17 @@ TEST(BoundingBoxTest, IoUCalculation) {
   EXPECT_FLOAT_EQ(bbox1.computeIoU(bbox3), 0.0f);  // No overlap
 }
 
+TEST(BoundingBoxTest, Set) {
+  detection::BoundingBox box(100.0f, 200.0f, 50.0f, 60.0f);
+  
+  box.set(150.0f, 250.0f, 80.0f, 90.0f);
+  
+  EXPECT_FLOAT_EQ(box.getX(), 150.0f);
+  EXPECT_FLOAT_EQ(box.getY(), 250.0f);
+  EXPECT_FLOAT_EQ(box.getWidth(), 80.0f);
+  EXPECT_FLOAT_EQ(box.getHeight(), 90.0f);
+}
+
 // ============================================================================
 // Detection Tests
 // ============================================================================
@@ -224,6 +235,86 @@ TEST(Position3DTest, MagnitudeAndDistance) {
   
   utils::Position3D pos2(0.0f, 0.0f, 0.0f);
   EXPECT_FLOAT_EQ(pos1.distanceTo(pos2), 5.0f);
+}
+
+TEST(Position3DTest, Setters) {
+  utils::Position3D pos;
+  
+  pos.setX(1.0f);
+  EXPECT_FLOAT_EQ(pos.getX(), 1.0f);
+  EXPECT_FLOAT_EQ(pos.getY(), 0.0f);
+  EXPECT_FLOAT_EQ(pos.getZ(), 0.0f);
+  
+  pos.setY(2.0f);
+  EXPECT_FLOAT_EQ(pos.getX(), 1.0f);
+  EXPECT_FLOAT_EQ(pos.getY(), 2.0f);
+  
+  pos.setZ(3.0f);
+  EXPECT_FLOAT_EQ(pos.getZ(), 3.0f);
+  
+  pos.set(4.0f, 5.0f, 6.0f);
+  EXPECT_FLOAT_EQ(pos.getX(), 4.0f);
+  EXPECT_FLOAT_EQ(pos.getY(), 5.0f);
+  EXPECT_FLOAT_EQ(pos.getZ(), 6.0f);
+}
+
+TEST(Position3DTest, Normalize) {
+  utils::Position3D pos(3.0f, 4.0f, 0.0f);
+  utils::Position3D normalized = pos.normalize();
+  
+  EXPECT_FLOAT_EQ(normalized.magnitude(), 1.0f);
+  EXPECT_FLOAT_EQ(normalized.getX(), 0.6f);
+  EXPECT_FLOAT_EQ(normalized.getY(), 0.8f);
+  EXPECT_FLOAT_EQ(normalized.getZ(), 0.0f);
+  
+  // Test zero vector normalization
+  utils::Position3D zero;
+  utils::Position3D zeroNormalized = zero.normalize();
+  EXPECT_FLOAT_EQ(zeroNormalized.magnitude(), 0.0f);
+}
+
+TEST(Position3DTest, DotProduct) {
+  utils::Position3D pos1(1.0f, 2.0f, 3.0f);
+  utils::Position3D pos2(4.0f, 5.0f, 6.0f);
+  
+  float dot = pos1.dot(pos2);
+  EXPECT_FLOAT_EQ(dot, 1.0f * 4.0f + 2.0f * 5.0f + 3.0f * 6.0f);
+  EXPECT_FLOAT_EQ(dot, 32.0f);
+  
+  // Test with zero vector
+  utils::Position3D zero;
+  EXPECT_FLOAT_EQ(pos1.dot(zero), 0.0f);
+}
+
+TEST(Position3DTest, CrossProduct) {
+  utils::Position3D pos1(1.0f, 0.0f, 0.0f);
+  utils::Position3D pos2(0.0f, 1.0f, 0.0f);
+  
+  utils::Position3D cross = pos1.cross(pos2);
+  EXPECT_FLOAT_EQ(cross.getX(), 0.0f);
+  EXPECT_FLOAT_EQ(cross.getY(), 0.0f);
+  EXPECT_FLOAT_EQ(cross.getZ(), 1.0f);
+  
+  // Test cross product with same vector (should be zero)
+  utils::Position3D cross2 = pos1.cross(pos1);
+  EXPECT_FLOAT_EQ(cross2.getX(), 0.0f);
+  EXPECT_FLOAT_EQ(cross2.getY(), 0.0f);
+  EXPECT_FLOAT_EQ(cross2.getZ(), 0.0f);
+}
+
+TEST(Position3DTest, ScalarDivision) {
+  utils::Position3D pos(6.0f, 8.0f, 10.0f);
+  
+  utils::Position3D divided = pos / 2.0f;
+  EXPECT_FLOAT_EQ(divided.getX(), 3.0f);
+  EXPECT_FLOAT_EQ(divided.getY(), 4.0f);
+  EXPECT_FLOAT_EQ(divided.getZ(), 5.0f);
+  
+  // Test division by zero (should return zero vector)
+  utils::Position3D zeroDiv = pos / 0.0f;
+  EXPECT_FLOAT_EQ(zeroDiv.getX(), 0.0f);
+  EXPECT_FLOAT_EQ(zeroDiv.getY(), 0.0f);
+  EXPECT_FLOAT_EQ(zeroDiv.getZ(), 0.0f);
 }
 
 // ============================================================================
@@ -442,6 +533,60 @@ TEST(PerceptionPipelineTest, FrameProcessing) {
   
   EXPECT_TRUE(output.success);
   EXPECT_EQ(pipeline.getFrameCount(), 1);
+}
+
+TEST(PerceptionPipelineTest, Getters) {
+  auto detector = std::make_shared<detection::YOLODetector>(
+      "models/nonexistent_model.onnx");
+  auto tracker = std::make_shared<tracking::KalmanTracker>();
+  core::CameraModel camera;
+  auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
+  
+  core::PerceptionPipeline pipeline(detector, tracker, transformer, camera);
+  
+  // Test getDetector
+  auto retrievedDetector = pipeline.getDetector();
+  EXPECT_EQ(retrievedDetector, detector);
+  
+  // Test getTracker
+  auto retrievedTracker = pipeline.getTracker();
+  EXPECT_EQ(retrievedTracker, tracker);
+  
+  // Test getTransformer
+  auto retrievedTransformer = pipeline.getTransformer();
+  EXPECT_EQ(retrievedTransformer, transformer);
+  
+  // Test getCameraModel
+  const auto& retrievedCamera = pipeline.getCameraModel();
+  EXPECT_EQ(retrievedCamera.getFocalLengthX(), camera.getFocalLengthX());
+  EXPECT_EQ(retrievedCamera.getFocalLengthY(), camera.getFocalLengthY());
+}
+
+TEST(PerceptionPipelineTest, Reset) {
+  auto detector = std::make_shared<detection::YOLODetector>(
+      "models/nonexistent_model.onnx");
+  auto tracker = std::make_shared<tracking::KalmanTracker>();
+  core::CameraModel camera;
+  auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
+  
+  core::PerceptionPipeline pipeline(detector, tracker, transformer, camera);
+  
+  // Process a frame to create tracks
+  int width = 640, height = 480;
+  std::vector<unsigned char> frame(width * height * 3, 128);
+  pipeline.processFrame(frame.data(), width, height, 3, 0.0);
+  
+  EXPECT_GT(pipeline.getFrameCount(), 0);
+  
+  // Reset pipeline
+  pipeline.reset();
+  
+  // Frame count should reset
+  EXPECT_EQ(pipeline.getFrameCount(), 0);
+  
+  // Tracker should be reset (no active tracks)
+  auto activeTracks = pipeline.getTracker()->getActiveTracks();
+  EXPECT_EQ(activeTracks.size(), 0);
 }
 
 // ============================================================================

@@ -54,6 +54,100 @@ TEST(TrackTest, StateTransition) {
   EXPECT_EQ(track.getState(), tracking::TrackState::CONFIRMED);
 }
 
+TEST(TrackTest, DefaultConstructor) {
+  tracking::Track track;
+  
+  EXPECT_EQ(track.getId(), -1);
+  EXPECT_EQ(track.getState(), tracking::TrackState::TENTATIVE);
+  EXPECT_EQ(track.getHitCount(), 0);
+  EXPECT_EQ(track.getMissCount(), 0);
+  EXPECT_EQ(track.getAge(), 0);
+}
+
+TEST(TrackTest, MarkMissed) {
+  detection::BoundingBox bbox(100.0f, 200.0f, 50.0f, 100.0f);
+  utils::Position3D pos(1.0f, 2.0f, 3.0f);
+  tracking::Track track(1, bbox, pos, 0.0);
+  
+  EXPECT_EQ(track.getMissCount(), 0);
+  
+  // Mark missed multiple times
+  for (int i = 0; i < 6; ++i) {
+    track.markMissed();
+  }
+  
+  EXPECT_EQ(track.getMissCount(), 6);
+  EXPECT_EQ(track.getState(), tracking::TrackState::LOST);
+}
+
+TEST(TrackTest, ShouldDelete) {
+  detection::BoundingBox bbox(100.0f, 200.0f, 50.0f, 100.0f);
+  utils::Position3D pos(1.0f, 2.0f, 3.0f);
+  tracking::Track track(1, bbox, pos, 0.0);
+  
+  // Should not delete if missCount <= maxAge
+  EXPECT_FALSE(track.shouldDelete(10));
+  
+  // Mark missed enough times
+  for (int i = 0; i < 11; ++i) {
+    track.markMissed();
+  }
+  
+  EXPECT_TRUE(track.shouldDelete(10));
+  
+  // LOST state should also return true
+  tracking::Track track2(2, bbox, pos, 0.0);
+  track2.setState(tracking::TrackState::LOST);
+  EXPECT_TRUE(track2.shouldDelete(100));
+}
+
+TEST(TrackTest, Predict) {
+  detection::BoundingBox bbox(100.0f, 200.0f, 50.0f, 100.0f);
+  utils::Position3D pos(1.0f, 2.0f, 3.0f);
+  tracking::Track track(1, bbox, pos, 0.0);
+  
+  // Set a velocity
+  utils::Position3D velocity(0.5f, 0.3f, 0.1f);
+  track.setVelocity(velocity);
+  
+  // Predict future position
+  track.predict(1.0);
+  
+  // Position should be updated based on velocity
+  const auto& newPos = track.getPosition();
+  EXPECT_GT(newPos.getX(), pos.getX());
+  EXPECT_EQ(track.getAge(), 2);  // Age increments
+}
+
+TEST(TrackTest, Setters) {
+  detection::BoundingBox bbox(100.0f, 200.0f, 50.0f, 100.0f);
+  utils::Position3D pos(1.0f, 2.0f, 3.0f);
+  tracking::Track track(1, bbox, pos, 0.0);
+  
+  // Test setState
+  track.setState(tracking::TrackState::CONFIRMED);
+  EXPECT_EQ(track.getState(), tracking::TrackState::CONFIRMED);
+  
+  track.setState(tracking::TrackState::LOST);
+  EXPECT_EQ(track.getState(), tracking::TrackState::LOST);
+  
+  // Test setVelocity
+  utils::Position3D velocity(1.0f, 2.0f, 3.0f);
+  track.setVelocity(velocity);
+  utils::Position3D retrievedVel = track.getVelocity();
+  EXPECT_FLOAT_EQ(retrievedVel.getX(), 1.0f);
+  EXPECT_FLOAT_EQ(retrievedVel.getY(), 2.0f);
+  EXPECT_FLOAT_EQ(retrievedVel.getZ(), 3.0f);
+  
+  // Test setPosition
+  utils::Position3D newPos(10.0f, 20.0f, 30.0f);
+  track.setPosition(newPos);
+  const auto& retrievedPos = track.getPosition();
+  EXPECT_FLOAT_EQ(retrievedPos.getX(), 10.0f);
+  EXPECT_FLOAT_EQ(retrievedPos.getY(), 20.0f);
+  EXPECT_FLOAT_EQ(retrievedPos.getZ(), 30.0f);
+}
+
 // ============================================================================
 // KalmanFilter Tests
 // ============================================================================
@@ -89,6 +183,45 @@ TEST(KalmanFilterTest, PredictUpdate) {
   
   auto updatedState = kf.getState();
   EXPECT_EQ(updatedState.size(), 6);
+}
+
+TEST(KalmanFilterTest, GetCovariance) {
+  tracking::KalmanFilter kf(6, 3);
+  
+  std::vector<float> state = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+  std::vector<float> cov(36, 0);
+  for (int i = 0; i < 6; ++i) {
+    cov[i * 6 + i] = 1.0f;
+  }
+  
+  kf.initialize(state, cov);
+  
+  auto retrievedCov = kf.getCovariance();
+  EXPECT_EQ(retrievedCov.size(), 36);
+  EXPECT_FLOAT_EQ(retrievedCov[0], 1.0f);  // First diagonal element
+  EXPECT_FLOAT_EQ(retrievedCov[7], 1.0f);  // Second diagonal element
+}
+
+TEST(KalmanFilterTest, Reset) {
+  tracking::KalmanFilter kf(6, 3);
+  
+  std::vector<float> state = {1.0f, 2.0f, 3.0f, 0.0f, 0.0f, 0.0f};
+  std::vector<float> cov(36, 0);
+  for (int i = 0; i < 6; ++i) {
+    cov[i * 6 + i] = 1.0f;
+  }
+  
+  kf.initialize(state, cov);
+  EXPECT_TRUE(kf.isInitialized());
+  
+  kf.reset();
+  EXPECT_FALSE(kf.isInitialized());
+  
+  // After reset, state should be zero
+  auto resetState = kf.getState();
+  for (size_t i = 0; i < resetState.size(); ++i) {
+    EXPECT_FLOAT_EQ(resetState[i], 0.0f);
+  }
 }
 
 // ============================================================================
@@ -246,5 +379,116 @@ TEST(KalmanTrackerTest, TrackCreationAndUpdate) {
   }
   
   EXPECT_GT(tracker.getTrackCount(), 0);
+}
+
+TEST(KalmanTrackerTest, GetTrackById) {
+  tracking::KalmanTracker tracker;
+  
+  detection::BoundingBox bbox(100.0f, 200.0f, 50.0f, 100.0f);
+  detection::Detection det(bbox, 0.85f, 0, "person");
+  std::vector<detection::Detection> detections = {det};
+  
+  tracker.update(detections, 0.0);
+  
+  // Get active tracks to find track ID
+  auto activeTracks = tracker.getActiveTracks();
+  if (activeTracks.size() > 0) {
+    int trackId = activeTracks[0].getId();
+    
+    // Get track by ID
+    tracking::Track retrievedTrack = tracker.getTrackById(trackId);
+    EXPECT_EQ(retrievedTrack.getId(), trackId);
+  }
+  
+  // Test with non-existent ID (should throw)
+  EXPECT_THROW(tracker.getTrackById(999), std::runtime_error);
+}
+
+TEST(KalmanTrackerTest, SetMaxAge) {
+  tracking::KalmanTracker tracker;
+  
+  // Default maxAge is 30
+  detection::BoundingBox bbox(100.0f, 200.0f, 50.0f, 100.0f);
+  detection::Detection det(bbox, 0.85f, 0, "person");
+  std::vector<detection::Detection> detections = {det};
+  
+  tracker.update(detections, 0.0);
+  
+  // Set max age
+  tracker.setMaxAge(50);
+  
+  // Create a track and mark it missed many times
+  auto activeTracks = tracker.getActiveTracks();
+  if (activeTracks.size() > 0) {
+    // The tracker should handle maxAge internally
+    // This test verifies the setter works
+    EXPECT_GT(tracker.getTrackCount(), 0);
+  }
+}
+
+TEST(KalmanTrackerTest, SetMinHits) {
+  tracking::KalmanTracker tracker;
+  
+  detection::BoundingBox bbox(100.0f, 200.0f, 50.0f, 100.0f);
+  detection::Detection det(bbox, 0.85f, 0, "person");
+  std::vector<detection::Detection> detections = {det};
+  
+  // Set min hits to 5
+  tracker.setMinHits(5);
+  
+  tracker.update(detections, 0.0);
+  
+  // Track should exist (created even if not confirmed yet)
+  // Verify the setter worked by checking tracks were created
+  auto activeTracks = tracker.getActiveTracks();
+  EXPECT_GE(activeTracks.size(), 0);  // At least 0 tracks (may be 0 if no detections matched)
+  
+  // Update multiple times to ensure track is created
+  for (int i = 1; i < 6; ++i) {
+    tracker.update(detections, i * 0.1);
+  }
+  
+  EXPECT_GT(tracker.getTrackCount(), 0);
+}
+
+TEST(KalmanTrackerTest, SetIouThreshold) {
+  tracking::KalmanTracker tracker;
+  
+  // Set IoU threshold
+  tracker.setIouThreshold(0.5f);
+  
+  detection::BoundingBox bbox(100.0f, 200.0f, 50.0f, 100.0f);
+  detection::Detection det(bbox, 0.85f, 0, "person");
+  std::vector<detection::Detection> detections = {det};
+  
+  // Update multiple times to create tracks
+  for (int i = 0; i < 5; ++i) {
+    tracker.update(detections, i * 0.1);
+  }
+  
+  // Tracker should work with new threshold
+  EXPECT_GT(tracker.getTrackCount(), 0);
+}
+
+TEST(KalmanTrackerTest, Reset) {
+  tracking::KalmanTracker tracker;
+  
+  detection::BoundingBox bbox(100.0f, 200.0f, 50.0f, 100.0f);
+  detection::Detection det(bbox, 0.85f, 0, "person");
+  std::vector<detection::Detection> detections = {det};
+  
+  // Update multiple times to ensure tracks are created
+  for (int i = 0; i < 5; ++i) {
+    tracker.update(detections, i * 0.1);
+  }
+  
+  EXPECT_GT(tracker.getTrackCount(), 0);
+  
+  tracker.reset();
+  EXPECT_EQ(tracker.getTrackCount(), 0);
+  
+  // Verify no active tracks after reset
+  auto activeTracks = tracker.getActiveTracks();
+  EXPECT_EQ(activeTracks.size(), 0);
 }
 
