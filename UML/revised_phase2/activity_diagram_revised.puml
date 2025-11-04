@@ -1,0 +1,135 @@
+@startuml
+
+' Human Perception System - Revised Activity Diagram Phase 2
+
+start
+
+:User calls processVideo() or processFrame();
+
+if (Video mode?) then (yes)
+    :Open video file with OpenCV VideoCapture;
+    :Extract FPS from video;
+    :Initialize frame counter;
+    
+    repeat
+        :Read frame from video;
+        :Calculate timestamp from FPS;
+    repeat while (More frames?)
+else (Single frame)
+    :Receive frame data;
+    :Receive timestamp;
+endif
+
+partition "YOLO Detection (Phase 1 & 2)" {
+    :Load image into OpenCV Mat;
+    :Resize to model input size (640x640);
+    :Normalize pixels [0,1];
+    :Create blob for DNN;
+    :Run YOLO inference (OpenCV DNN);
+    :Parse 3D tensor output [1,84,8400];
+    :Extract detections;
+    :Filter for human class (class ID 0);
+    :Filter by confidence threshold;
+    :Apply NMS (OpenCV cv::dnn::NMSBoxes);
+    :Scale boxes to original image size;
+    :Get human detections;
+}
+
+partition "Coordinate Transformation" {
+    :For each detection;
+    :Extract bbox center;
+    :Estimate depth from bbox height;
+    note right
+        depth = (focal_length * human_height) / bbox_height
+    end note
+    :Convert pixel to camera frame;
+    :Apply camera rotation;
+    :Apply camera translation;
+    :Get 3D position in robot frame;
+}
+
+partition "Kalman Tracking (Phase 1 & 2)" {
+    :Predict all tracks;
+    :Build transition matrix F with dt;
+    :Propagate state (x = F * x);
+    :Propagate covariance (P = F*P*F^T + Q);
+    
+    :Compute IoU between predicted boxes and detections;
+    
+    if (IoU > threshold?) then (yes)
+        :Associate detection to track;
+        :Update Kalman filter;
+        note right
+            Innovation: y = z - H*x
+            Gain: K = P*H^T*(H*P*H^T + R)^-1
+            Update: x = x + K*y
+            Covariance: P = (I - K*H)*P
+        end note
+        :Update track state;
+        :Increment hit count;
+        if (Hit count >= minHits?) then (yes)
+            :Set track state to CONFIRMED;
+        else (no)
+            :Keep track as TENTATIVE;
+        endif
+    else (no)
+        :Create new track;
+        :Initialize Kalman filter;
+        :Set track state to TENTATIVE;
+        :Assign new track ID;
+    endif
+    
+    :Handle unmatched tracks;
+    :Mark tracks as missed;
+    :Increment miss count;
+    if (Miss count > maxAge?) then (yes)
+        :Set track state to LOST;
+        :Delete track;
+    else (no)
+        :Keep track active;
+    endif
+}
+
+partition "Visualization (Phase 2)" {
+    if (Visualization enabled?) then (yes)
+        :Convert frame to OpenCV Mat;
+        :Create display frame;
+        :Draw bounding boxes for all detections;
+        :Draw confidence labels for detections;
+        :Draw track bounding boxes (different color);
+        :Draw track ID labels;
+        :Draw track state indicators;
+        :Draw frame info (FPS, frame count, track count);
+        :Display window (cv::imshow);
+        :Wait for key press (cv::waitKey);
+    else (no)
+        :Skip visualization;
+    endif
+}
+
+partition "Output Generation" {
+    :Create PerceptionOutput;
+    :Store detections;
+    :Store active tracks;
+    :Store timestamp;
+    :Store frame count;
+    :Set success flag;
+}
+
+if (Video mode?) then (yes)
+    :Store results for this frame;
+    :Increment frame counter;
+    
+    if (More frames?) then (yes)
+        :Continue to next frame;
+    else (no)
+        :Close video file;
+        :Return all results;
+        stop
+    endif
+else (Single frame)
+    :Return PerceptionOutput;
+    stop
+endif
+
+@enduml

@@ -8,7 +8,7 @@ The **Human Perception System (HPS)** is a modular C++17 robotics perception mod
 
 ## Purpose
 
-The purpose of the Human Perception System (HPS) is to provide a robust and modular real-time solution for detecting and tracking humans using a monocular camera, enabling robots at Acme Robotics to accurately perceive the presence and location of people in their environment. By outputting 2D and 3D positions in the robot's reference frame, the system enhances downstream navigation and safety functions, with particular emphasis on reliability, extensibility, and integration readiness for practical robotics deployments.
+The purpose of the Human Perception System (HPS) is to provide a robust and modular real-time solution for detecting and tracking humans using a monocular camera, enabling robots at Acme Robotics to accurately perceive the presence and location of people in their environment. By outputting  positions of humans, the system enhances downstream navigation and safety functions, with particular emphasis on reliability, extensibility, and integration readiness for practical robotics deployments.
 
 ## About Us
 
@@ -22,6 +22,11 @@ My name is Rahul Kumar. I am a Robotics Master's student at the University of Ma
 
 
 ## Authors
+
+### Phase 2
+
+- Rahul Kumar (Driver)
+- Venkata Madhav Tadavarthi (Navigator)
 
 ### Phase 1
 
@@ -38,12 +43,21 @@ My name is Rahul Kumar. I am a Robotics Master's student at the University of Ma
 - **Human Detection**: YOLOv8-based detection with OpenCV DNN, configurable confidence thresholds, and NMS
 - **Multi-Object Tracking**: Kalman Filter-based tracking with IoU data association and full covariance propagation
 - **Coordinate Transformation**: Complete pixel-to-robot frame transformation with pinhole camera model
+- **Video Processing**: Full video file processing with frame-by-frame detection and tracking
+- **Visualization**: Real-time OpenCV-based visualization with bounding boxes, track IDs, and frame information
 - **Real-Time Processing**: Designed for 30 FPS operation without ROS dependency
 - **Depth Estimation**: Monocular depth estimation using bounding box height heuristic
 - **Modular Architecture**: Clean interfaces following SOLID principles and design patterns
 - **Matrix Operations**: Full Kalman filter implementation with matrix multiply, transpose, and inversion
+- **Comprehensive Testing**: 98 unit tests with 83%+ code coverage
 
 ### Project Documentation
+
+**Phase 2 Video & Documentation:**
+
+- [Phase 2 Video](https://drive.google.com/drive/folders/1EyaaiMVev9sIGax7qiCHixWLD2Pylc8X?usp=sharing) - Phase 2 demonstration video
+
+- [Product Backlog (AIP Sheet)](https://docs.google.com/spreadsheets/d/1wcmKYTpv4yeAv1NeTeLlhB47EcRxOFroaWx42daGazo/edit?usp=sharing) - Agile Iterative Process tracking
 
 **Phase 1 Sprint Planning:**
 
@@ -69,7 +83,7 @@ My name is Rahul Kumar. I am a Robotics Master's student at the University of Ma
 - [UML Diagrams](#uml-diagrams)
 - [Design Patterns](#design-patterns)
 - [Project Structure](#project-structure)
-- [Phase 0 Status](#phase-0-status)
+- [Phase Status](#phase-status)
 - [Contributing](#contributing)
 - [License](#license)
 - [Authors](#authors)
@@ -100,24 +114,23 @@ The system is organized into four main modules:
 - **Position3D**: 3D vector class with geometric operations
 - **GeometryUtils**: Static utility functions for geometric calculations
 
-### Phase 1 Implementation Highlights
+### Phase 1 & 2 Implementation Highlights
 
-**✅ Fully Implemented:**
+**✅ Fully Implemented (Phase 1):**
 - Real YOLO detection with OpenCV DNN (supports ONNX & PyTorch models)
 - Complete Kalman filter with matrix operations (6x6 state, full covariance)
 - Enhanced coordinate transformation with depth estimation
 - Non-maximum suppression (NMS) using IoU
 - Pixel-to-robot frame coordinate transformation
-
-**🚧 Partially Implemented:**
 - OpenCV integration (conditional via `HAVE_OPENCV` flag)
 - Image preprocessing (real resize, normalization, blob creation)
 
-**📋 Phase 2 Remaining:**
-- Video file processing (`processVideo`)
-- Camera capture (`processCamera`)
-- OpenCV-based visualization
-- Performance profiling and optimization
+**✅ Fully Implemented (Phase 2):**
+- Video file processing (`processVideo`) with OpenCV VideoCapture
+- OpenCV-based visualization with bounding boxes, track IDs, and frame information
+- Code optimization and redundancy removal (~433 lines removed)
+- Comprehensive test coverage (98 tests, 83%+ code coverage)
+- LCOV integration for code coverage analysis
 
 ## Dependencies
 
@@ -126,7 +139,7 @@ The system is organized into four main modules:
 - **CMake 3.14+**
 - **GoogleTest** (fetched automatically by CMake)
 
-### Phase 1 Dependencies
+### Dependencies (Phase 1 & 2)
 - **OpenCV 4.8+** (required for YOLO inference with 3D tensor outputs - conditionally compiled with HAVE_OPENCV)
   - **Important**: OpenCV 4.8+ is required because modern YOLOv5/YOLOv8 models use 3D tensor outputs `[1, 84, 8400]` which are not supported in older versions
   - OpenCV 4.5.4 and earlier will fail with `shape_utils.hpp` errors when processing these models
@@ -139,7 +152,6 @@ The system is organized into four main modules:
    - Camera interface and image I/O
    - DNN module for YOLO inference with 3D tensor support
    - Camera calibration and coordinate transformations
-   - **Version requirement**: OpenCV 4.8+ is mandatory for modern YOLO models (YOLOv5/YOLOv8) that use 3D tensor outputs
    - **Installation**: Can be installed system-wide via package manager or built from source
    
 2. **YOLOv8**: State-of-the-art object detector (AGPL-3.0 license)
@@ -148,6 +160,27 @@ The system is organized into four main modules:
    - High accuracy and real-time performance
 
 ## Installation
+
+### Download Required Files
+
+Before building, download the required video and model files:
+
+1. **Download from Google Drive**: [Phase 2 data & yolo model](https://drive.google.com/drive/folders/1EyaaiMVev9sIGax7qiCHixWLD2Pylc8X?usp=sharing)
+
+2. **Place files in correct directories**:
+   ```bash
+   # Place video file in data/ directory
+   # Example: data/ADL-Rundle-6-raw.mp4
+   
+   # Place YOLO model (.onnx file) in models/ directory
+   # Example: models/yolov8n.onnx
+   ```
+
+3. **Verify file structure**:
+   ```bash
+   ls data/*.mp4      # Should show your video file
+   ls models/*.onnx  # Should show your model file
+   ```
 
 ### Standard Build
 
@@ -203,50 +236,15 @@ cmake --build build/ --target docs
 open docs/html/index.html
 ```
 
-## Usage
+### Video Processing Example (Phase 2)
 
-### Basic Example
+Process video files with visualization:
 
-```cpp
-#include "perception/core/PerceptionPipeline.hpp"
-#include "perception/detection/YOLODetector.hpp"
-#include "perception/tracking/KalmanTracker.hpp"
-#include "perception/core/CoordinateTransformer.hpp"
+![Detection and Tracking Demo](./docs/detection_tracking.gif)
 
-using namespace perception;
+*Human detection and tracking visualization showing bounding boxes and track IDs*
 
-int main() {
-  // Initialize camera model
-  core::CameraModel camera(800.0f, 800.0f, 320.0f, 240.0f, 640, 480);
-  
-  // Set camera pose (0.5m above robot base)
-  utils::Position3D cameraPos(0.0f, 0.0f, 0.5f);
-  float rotation[9] = {1, 0, 0, 0, 1, 0, 0, 0, 1};  // Identity
-  camera.setCameraPose(cameraPos, rotation);
-  
-  // Create detector, tracker, transformer
-  auto detector = std::make_shared<detection::YOLODetector>(
-      "models/yolov8n.onnx", 0.5f, 0.4f, 640);
-  auto tracker = std::make_shared<tracking::KalmanTracker>(30, 3, 0.3f);
-  auto transformer = std::make_shared<core::CoordinateTransformer>(camera);
-  
-  // Create perception pipeline
-  core::PerceptionPipeline pipeline(detector, tracker, transformer, camera);
-  
-  // Process frame
-  core::PerceptionOutput output = pipeline.processFrame(
-      frame_data, width, height, channels, timestamp);
-  
-  // Access tracked humans
-  for (const auto& track : output.tracks) {
-    const auto& pos = track.getPosition();
-    std::cout << "Human at: (" << pos.getX() << ", " 
-              << pos.getY() << ", " << pos.getZ() << ") m\n";
-  }
-  
-  return 0;
-}
-```
+
 
 ### Camera Calibration
 
@@ -259,14 +257,6 @@ For accurate 3D position estimation, calibrate your camera:
 camera.loadCalibration("config/camera_calibration.yaml");
 ```
 
-## Testing
-
-### Run All Tests
-
-```bash
-cd build/
-ctest --verbose
-```
 
 ### Run Specific Test
 
@@ -276,52 +266,60 @@ ctest --verbose
 
 ### Test Coverage
 
-The project aims for **90%+ code coverage**. Current test suites:
+The project achieves **83%+ code coverage** with 98 comprehensive tests. Current test suites:
 
-- **BoundingBox Tests**: IoU calculation, area computation, edge cases
-- **Detection Tests**: Validity checks, confidence thresholds
-- **YOLODetector Tests**: Initialization, mock detections
-- **Track Tests**: State transitions, update logic
-- **KalmanFilter Tests**: Prediction, update cycles
-- **KalmanTracker Tests**: Data association, track management
+- **BoundingBox Tests**: IoU calculation, area computation, zero area edge cases
+- **Detection Tests**: Validity checks, confidence thresholds, setters
+- **YOLODetector Tests**: Initialization, mock detections, error handling
+- **Track Tests**: State transitions, update logic, prediction, getters
+- **KalmanFilter Tests**: Prediction, update cycles, error handling
+- **KalmanTracker Tests**: Data association, track management, reset
 - **Coordinate Transformation Tests**: Image→Robot frame conversion
-- **PerceptionPipeline Tests**: End-to-end integration
+- **PerceptionPipeline Tests**: End-to-end integration, video processing, visualization
+- **GeometryUtils Tests**: Depth estimation, rotation, translation
+- **CameraModel Tests**: Calibration, pose, intrinsics
+- **Video Processing Tests**: Frame extraction, timestamp calculation, results collection
+- **Visualization Tests**: Bounding box drawing, track ID labels, frame display
+- **Error Handling Tests**: Invalid inputs, edge cases, exception handling
 
 
 ## UML Diagrams
 
-### Class Diagram
+### Phase 2 Diagrams (Current)
 
-Shows complete class hierarchy, interfaces, and relationships.
+**Class Diagram** - Shows complete class hierarchy, interfaces, and relationships with Phase 2 enhancements.
 
-![Class Diagram](./UML/revised/class_diagram_revised.png)
+![Class Diagram](./UML/revised_phase2/class_diagram_revised.png)
 
-See: [`UML/revised/class_diagram_revised.pdf`](./UML/revised/class_diagram_revised.pdf)
+See: [`UML/revised_phase2/class_diagram_revised.pdf`](./UML/revised_phase2/class_diagram_revised.pdf)
 
-### Sequence Diagram
+**Sequence Diagram** - Illustrates video processing workflow with detection, tracking, and visualization.
 
-Illustrates frame processing workflow from detection to tracking.
+![Sequence Diagram](./UML/revised_phase2/sequence_diagram_revised.png)
 
-![Sequence Diagram](./UML/revised/sequence_diagram_revised.png)
+See: [`UML/revised_phase2/sequence_diagram_revised.pdf`](./UML/revised_phase2/sequence_diagram_revised.pdf)
 
-See: [`UML/revised/sequence_diagram_revised.pdf`](./UML/revised/sequence_diagram_revised.pdf)
+**Activity Diagram** - Depicts the complete perception pipeline decision flow including video processing and visualization.
 
-### Activity Diagram
+![Activity Diagram](./UML/revised_phase2/activity_diagram_revised.png)
 
-Depicts the perception pipeline decision flow and processing steps.
+See: [`UML/revised_phase2/activity_diagram_revised.pdf`](./UML/revised_phase2/activity_diagram_revised.pdf)
 
-![Activity Diagram](./UML/revised/activity_diagram_revised.png)
+### Phase 1 Diagrams (Historical)
 
-See: [`UML/revised/activity_diagram_revised.pdf`](./UML/revised/activity_diagram_revised.pdf)
+For reference, Phase 1 diagrams are available in [`UML/revised_phase1/`](./UML/revised_phase1/).
 
 ### Generate UML Diagrams
 
 ```bash
 # Install PlantUML
-sudo apt-get install plantuml
+sudo apt-get install plantuml graphviz
 
-# Generate PNG from PlantUML files
-plantuml docs/uml/*.puml
+# Generate PNG from PlantUML files (Phase 2)
+plantuml UML/revised_phase2/*.puml
+
+# Generate PDF from PNG (optional)
+convert UML/revised_phase2/*.png UML/revised_phase2/*.pdf
 ```
 
 ## Design Patterns
@@ -336,7 +334,7 @@ The codebase demonstrates several design patterns:
    - `PerceptionPipeline` simplifies complex subsystem interactions
    - Single entry point for perception functionality
 
-3. **Factory Pattern** (Phase 1+)
+3. **Factory Pattern** (Phase 1 & 2)
    - Detector and tracker factory classes for object creation
 
 4. **RAII Pattern**
@@ -401,7 +399,7 @@ phase0/
 └── LICENSE                       # MIT License
 ```
 
-## Phase 0 & 1 Status
+## Phase Status (Phase 0, 1 & 2)
 
 ### Phase 0 Completed ✅
 
@@ -430,21 +428,25 @@ phase0/
 
 ### Phase 1 Tasks (Completed)
 
-- [x] Integrate OpenCV for image I/O (partial - available via HAVE_OPENCV flag)
+- [x] Integrate OpenCV for image I/O (conditional via HAVE_OPENCV flag)
 - [x] Implement actual YOLO model loading and inference
 - [x] Complete Kalman Filter matrix operations
-- [ ] Add video/camera processing support (processVideo/processCamera still stubs)
-- [ ] Implement visualization module (stub - no OpenCV visualization yet)
 - [x] Real-world testing structure in place
-- [ ] Performance optimization
 - [x] GitHub CI/CD pipeline setup
 - [x] CodeCov integration
 
-### Phase 2 Tasks (Remaining)
+### Phase 2 Completed ✅
 
-- [ ] Implement video file processing (`processVideo`)
-- [ ] Implement camera capture (`processCamera`)
-- [ ] Add OpenCV-based visualization with bounding boxes
+- [x] **Video File Processing**: Complete `processVideo()` implementation with OpenCV VideoCapture
+- [x] **Visualization Module**: OpenCV-based visualization with bounding boxes, track IDs, and frame info
+- [x] **Code Optimization**: Removed redundant code paths and unused methods (~433 lines removed)
+- [x] **Test Coverage**: Expanded to 98 tests covering all public methods and edge cases
+- [x] **LCOV Integration**: Added exclusion markers for untestable OpenCV fallback paths
+- [x] **Code Quality**: Improved codebase maintainability and reduced complexity
+
+### Phase 2 Tasks (Remaining - Optional)
+
+- [ ] Implement camera capture (`processCamera`) - removed as video-only application
 - [ ] Handle occlusion scenarios (optional)
 - [ ] Multiple camera support
 - [ ] Advanced data association (Hungarian algorithm)
@@ -497,7 +499,7 @@ Assumptions:
 - Camera calibrated with known focal length
 - Person standing upright
 
-### Kalman Filter (Phase 1 Implementation)
+### Kalman Filter (Phase 1 & 2 Implementation)
 
 State vector: `[x, y, z, vx, vy, vz]` (position and velocity in 3D)
 
@@ -522,7 +524,7 @@ Gain: K = P * H^T * (H*P*H^T + R)^-1
 Update: x = x + K*y, P = (I - K*H)*P
 ```
 
-**Phase 1 Enhancement**: Complete matrix operations including:
+**Phase 1 & 2 Implementation**: Complete matrix operations including:
 - Matrix multiplication for state prediction
 - Matrix inversion (Gauss-Jordan elimination)
 - Covariance propagation
@@ -535,9 +537,9 @@ Uses IoU (Intersection over Union) matching:
 - Compute IoU between predicted track boxes and detected boxes
 - Match pairs with IoU > threshold (default 0.3)
 - Greedy assignment (currently implemented)
-- Hungarian algorithm (planned for Phase 2)
+- Hungarian algorithm (optional future enhancement)
 
-**Phase 1**: Real NMS implementation using OpenCV `cv::dnn::NMSBoxes`
+**Phase 1 & 2**: Real NMS implementation using OpenCV `cv::dnn::NMSBoxes` with full video processing and visualization support
 
 ## Contributing
 
@@ -547,7 +549,7 @@ This project uses Test-Driven Development (TDD) and pair programming:
 
 1. **Driver**: Writes code
 2. **Navigator**: Reviews, suggests improvements
-3. Switch roles each phase. Phase 2 will have mixed roles for each individual
+3. Switch roles each phase. Phase 2 completed with mixed roles for each individual
 
 ### Commit Message Format
 
@@ -640,6 +642,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Project Status**: Phase 0 Complete ✅ | Phase 1 Complete ✅ | Phase 2 In Progress 🚧
+**Project Status**: Phase 0 Complete ✅ | Phase 1 Complete ✅ | Phase 2 Complete ✅
 
 For questions or issues, please open a GitHub issue or contact the authors.

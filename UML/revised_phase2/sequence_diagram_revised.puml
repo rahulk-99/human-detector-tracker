@@ -1,0 +1,108 @@
+@startuml
+
+' Human Perception System - Revised Sequence Diagram Phase 2
+
+actor User as User
+participant Pipeline as PerceptionPipeline
+participant VideoCap as VideoCapture
+participant Detector as YOLODetector  
+participant Tracker as KalmanTracker
+participant Transformer as CoordinateTransformer
+participant Kalman as KalmanFilter
+participant Visualizer as Visualization
+
+== Video Processing (Phase 2) ==
+
+User -> Pipeline: processVideo(videoPath)
+activate Pipeline
+
+Pipeline -> VideoCap: Open video file
+activate VideoCap
+VideoCap --> Pipeline: video opened
+deactivate VideoCap
+
+loop For each frame in video
+    Pipeline -> VideoCap: read(frame)
+    activate VideoCap
+    VideoCap --> Pipeline: frame data
+    deactivate VideoCap
+    
+    Pipeline -> Pipeline: processFrame(frame, timestamp)
+    activate Pipeline
+    
+    == Detection Phase ==
+    Pipeline -> Detector: detect(frame, width, height, channels)
+    activate Detector
+    Detector -> Detector: preprocessImage()
+    Detector -> Detector: Run YOLO inference
+    Detector -> Detector: postprocessOutput()
+    Detector -> Detector: applyNMS()
+    Detector --> Pipeline: detections[] (humans only)
+    deactivate Detector
+    
+    == Tracking Phase ==
+    Pipeline -> Tracker: update(detections, timestamp)
+    activate Tracker
+    
+    Tracker -> Tracker: predictTracks()
+    loop For each track
+        Tracker -> Kalman: predict(dt)
+        activate Kalman
+        Kalman -> Kalman: Build transition matrix F
+        Kalman -> Kalman: Matrix multiply (F * state)
+        Kalman -> Kalman: Update covariance
+        Kalman --> Tracker: predicted state
+        deactivate Kalman
+    end
+    
+    Tracker -> Tracker: associateDetectionsToTracks()
+    Tracker -> Tracker: Compute IoU between tracks and detections
+    
+    loop For matched pairs
+        Tracker -> Kalman: update(measurement)
+        activate Kalman
+        Kalman -> Kalman: Compute innovation
+        Kalman -> Kalman: Compute Kalman gain K
+        Kalman -> Kalman: Update state
+        Kalman -> Kalman: Update covariance
+        Kalman --> Tracker: updated state
+        deactivate Kalman
+        Tracker -> Tracker: updateTrack()
+    end
+    
+    loop For unmatched detections
+        Tracker -> Tracker: createNewTrack()
+    end
+    
+    Tracker -> Tracker: deleteOldTracks()
+    Tracker --> Pipeline: activeTracks[]
+    deactivate Tracker
+    
+    == Visualization Phase (Phase 2) ==
+    alt Visualization enabled
+        Pipeline -> Visualizer: visualizeFrame(frame, output)
+        activate Visualizer
+        Visualizer -> Visualizer: Convert frame to OpenCV Mat
+        loop For each detection
+            Visualizer -> Visualizer: Draw bounding box
+            Visualizer -> Visualizer: Draw confidence label
+        end
+        loop For each track
+            Visualizer -> Visualizer: Draw track bounding box
+            Visualizer -> Visualizer: Draw track ID
+        end
+        Visualizer -> Visualizer: Display frame info (FPS, frame count)
+        Visualizer -> Visualizer: cv::imshow()
+        deactivate Visualizer
+    end
+    
+    Pipeline -> Pipeline: Store results
+    Pipeline --> Pipeline: PerceptionOutput
+    deactivate Pipeline
+    
+end
+
+Pipeline -> VideoCap: Release video
+Pipeline --> User: results[] (all frames)
+
+@enduml

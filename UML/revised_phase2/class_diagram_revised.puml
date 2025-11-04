@@ -1,0 +1,229 @@
+@startuml
+
+' Human Perception System - Revised Class Diagram Phase 2
+
+package Detection {
+  interface IDetector {
+    + detect()
+    + setConfidenceThreshold()
+    + getConfidenceThreshold()
+    + isInitialized()
+  }
+  
+  class YOLODetector {
+    - net_: cv::dnn::Net
+    - classNames_: vector<string>
+    - realMode_: bool
+    + detect()
+    + preprocessImage()
+    + postprocessOutput()
+    + applyNMS()
+    + setConfidenceThreshold()
+    + getConfidenceThreshold()
+    + setNmsThreshold()
+    + getNmsThreshold()
+    + getInputSize()
+  }
+  
+  class Detection {
+    + getBoundingBox()
+    + getConfidence()
+    + getClassId()
+    + getClassName()
+    + setBoundingBox()
+    + setConfidence()
+    + setClass()
+    + isValid()
+  }
+  
+  class BoundingBox {
+    + getX(), getY()
+    + getWidth(), getHeight()
+    + getLeft(), getRight()
+    + getTop(), getBottom()
+    + getArea()
+    + computeIoU()
+    + set()
+  }
+}
+
+package Tracking {
+  interface ITracker {
+    + update()
+    + getActiveTracks()
+    + getTrackById()
+    + reset()
+    + setMaxAge()
+    + getTrackCount()
+  }
+  
+  class KalmanTracker {
+    - kalmanFilters_: map<int, KalmanFilter>
+    - tracks_: vector<Track>
+    + update()
+    + getActiveTracks()
+    + getTrackById()
+    + reset()
+    + setMaxAge()
+    + getTrackCount()
+    - predictTracks()
+    - associateDetectionsToTracks()
+    - createNewTrack()
+    - updateTrack()
+  }
+  
+  class Track {
+    - trackId_: int
+    - state_: TrackState
+    - bbox_: BoundingBox
+    - position_: Position3D
+    - velocity_: Position3D
+    + getId()
+    + getState()
+    + getBoundingBox()
+    + getPosition()
+    + getVelocity()
+    + getTimestamp()
+    + update()
+    + predict()
+    + markMissed()
+    + shouldDelete()
+  }
+  
+  class KalmanFilter {
+    - state_: vector<float>
+    - covariance_: vector<float>
+    - F_: matrix
+    - H_: matrix
+    - Q_: matrix
+    - R_: matrix
+    - K_: matrix
+    + initialize()
+    + predict()
+    + update()
+    + getState()
+    + reset()
+    + isInitialized()
+    - matrixMultiply()
+    - matrixTranspose()
+    - matrixInverse()
+  }
+}
+
+package Core {
+  class PerceptionPipeline {
+    - detector_: shared_ptr<IDetector>
+    - tracker_: shared_ptr<ITracker>
+    - transformer_: shared_ptr<ICoordinateTransform>
+    - cameraModel_: CameraModel
+    - frameCount_: int
+    - visualizationEnabled_: bool
+    + processFrame()
+    + processVideo()
+    + reset()
+    + getDetector()
+    + getTracker()
+    + getTransformer()
+    + getCameraModel()
+    + getFrameCount()
+    + setVisualization()
+    + isVisualizationEnabled()
+    - visualizeFrame()
+  }
+  
+  class CameraModel {
+    - fx_, fy_, cx_, cy_
+    - imageWidth_, imageHeight_
+    - cameraPosition_: Position3D
+    - cameraRotation_: float[9]
+    + getFocalLengthX()
+    + getFocalLengthY()
+    + getPrincipalPointX()
+    + getPrincipalPointY()
+    + getImageWidth()
+    + getImageHeight()
+    + getCameraPosition()
+    + getCameraRotation()
+    + setCameraPose()
+    + setIntrinsics()
+    + loadCalibration()
+    + isCalibrated()
+  }
+  
+  class CoordinateTransformer {
+    - cameraModel_: CameraModel
+    - averageHumanHeight_: float
+    + imageToRobotFrame()
+    + pixelToCameraFrame()
+    + cameraToRobotFrame()
+    + setCameraModel()
+    + setAverageHumanHeight()
+  }
+}
+
+package Utils {
+  class Position3D {
+    - x_, y_, z_: float
+    + getX(), getY(), getZ()
+    + setX(), setY(), setZ()
+    + set()
+    + distanceTo()
+    + magnitude()
+    + normalize()
+    + operator+()
+    + operator-()
+    + operator*()
+    + operator/()
+    + dot()
+    + cross()
+  }
+  
+  class GeometryUtils {
+    {static} + estimateDepthFromBboxHeight()
+    {static} + applyRotation()
+    {static} + applyTranslation()
+  }
+}
+
+YOLODetector ..|> IDetector
+Detection *-- BoundingBox
+KalmanTracker ..|> ITracker
+KalmanTracker o-- KalmanFilter
+KalmanTracker *-- Track
+Track *-- BoundingBox
+Track *-- Position3D
+PerceptionPipeline o-- IDetector
+PerceptionPipeline o-- ITracker
+PerceptionPipeline o-- ICoordinateTransform
+PerceptionPipeline *-- CameraModel
+CoordinateTransformer *-- CameraModel
+CoordinateTransformer ..> Position3D
+CoordinateTransformer ..> GeometryUtils
+
+note right of YOLODetector
+  Phase 1 & 2: Real OpenCV DNN
+  - Model loading (ONNX)
+  - Real inference
+  - NMS (OpenCV)
+  - Human-only detection
+  - Optimized (removed redundant code)
+end note
+
+note right of KalmanFilter
+  Phase 1 & 2: Full implementation
+  - Matrix operations
+  - Covariance tracking
+  - State prediction
+  - Complete Kalman equations
+end note
+
+note right of PerceptionPipeline
+  Phase 2: Enhanced
+  - Video processing (processVideo)
+  - Visualization (visualizeFrame)
+  - Frame-by-frame processing
+  - Track ID display
+  - Removed processCamera
+end note
+
+@enduml
